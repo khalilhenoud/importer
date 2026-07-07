@@ -18,8 +18,8 @@
 #include <library/string/cstring.h>
 #include <entity/scene/camera.h>
 #include <entity/scene/scene.h>
-#include <converter/utils.h>
-#include <converter/parsers/assimp/lights.h>
+#include <importer/utils.h>
+#include <importer/parsers/assimp/lights.h>
 
 
 void

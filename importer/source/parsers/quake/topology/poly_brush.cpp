@@ -1,17 +1,17 @@
 /**
  * @file poly_brush.cpp
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-10-04
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <algorithm>
 #include <iterator>
-#include <converter/parsers/quake/topology/aabb.h>
-#include <converter/parsers/quake/topology/poly_brush.h>
+#include <importer/parsers/quake/topology/aabb.h>
+#include <importer/parsers/quake/topology/poly_brush.h>
 
 
 namespace topology {
@@ -52,7 +52,7 @@ poly_brush_t::poly_brush_t(const brush_t* brush, const float radius)
         add_set_v3f(&meta.positions[index], &vertex);
         hits[index]++;
       }
-    }   
+    }
   }
 
   // normalize meta.positions
@@ -78,7 +78,7 @@ poly_brush_t::to_faces() const
     auto tris = polygon.triangulate();
     faces.insert(faces.end(), tris.begin(), tris.end());
   }
-  
+
   return faces;
 }
 
@@ -145,7 +145,7 @@ poly_brush_t::weld(
     for (uint32_t j = 0; j < brush->meta.polygons.size(); ++j) {
       indexed_poly_t& indexed_poly = brush->meta.polygons[j];
       polygon_t& polygon = brush->polygons[j];
-      
+
       for (uint32_t k = 0; k < indexed_poly.indices.size(); ++k)
         polygon.points[k] = brush->meta.positions[indexed_poly.indices[k]];
     }
@@ -154,14 +154,14 @@ poly_brush_t::weld(
 
 void
 poly_brush_t::sort_and_weld(
-  std::vector<poly_brush_t>& brushes, 
+  std::vector<poly_brush_t>& brushes,
   const float radius)
 {
   const float r2 = radius * radius;
 
   struct node_t {
     node_t(
-      const std::vector<point3f>& positions, 
+      const std::vector<point3f>& positions,
       uint32_t i)
       : aabb{positions}
       , brush_index{i}
@@ -177,16 +177,16 @@ poly_brush_t::sort_and_weld(
 
   auto sweep = [](
     const float min,
-    const float max, 
+    const float max,
     uint32_t axis,
     std::vector<node_t> nodes) -> std::vector<node_t>
   {
     std::vector<float>::iterator iter_min, iter_max;
     ptrdiff_t start, end;
 
-    std::sort(nodes.begin(), nodes.end(), 
-      [axis](const node_t& a, const node_t& b) { 
-        return a.aabb.min.data[axis] < b.aabb.min.data[axis]; 
+    std::sort(nodes.begin(), nodes.end(),
+      [axis](const node_t& a, const node_t& b) {
+        return a.aabb.min.data[axis] < b.aabb.min.data[axis];
       });
     std::vector<float> values;
     std::transform(nodes.begin(), nodes.end(), std::back_inserter(values),
@@ -195,7 +195,7 @@ poly_brush_t::sort_and_weld(
     // first element that satisfies >=
     iter_min = std::lower_bound(values.begin(), values.end(), min);
     start = std::distance(values.begin(), iter_min);
-    // first element that satisfies > 
+    // first element that satisfies >
     iter_max = std::upper_bound(values.begin(), values.end(), max);
     end = std::distance(values.begin(), iter_max);
 
@@ -209,7 +209,7 @@ poly_brush_t::sort_and_weld(
     return std::vector<node_t>(nodes.begin() + start, nodes.begin() + end);
   };
 
-  auto sweep_and_prune = 
+  auto sweep_and_prune =
     [&](
       const node_t& node,
       float threshold = 1.f) -> std::vector<node_t>
@@ -217,12 +217,12 @@ poly_brush_t::sort_and_weld(
       std::vector<node_t> filtered = nodes;
       for (uint32_t axis = 0; axis < 3; ++axis) {
         filtered = sweep(
-        node.aabb.min.data[axis] - threshold, 
-        node.aabb.max.data[axis] + threshold, 
-        axis, 
+        node.aabb.min.data[axis] - threshold,
+        node.aabb.max.data[axis] + threshold,
+        axis,
         filtered);
       }
-      
+
       return filtered;
     };
 
@@ -230,7 +230,7 @@ poly_brush_t::sort_and_weld(
     std::vector<node_t> batch = sweep_and_prune(node);
     // weld
     std::vector<poly_brush_t*> brush_batch;
-    std::transform(batch.cbegin(), batch.cend(), std::back_inserter(brush_batch), 
+    std::transform(batch.cbegin(), batch.cend(), std::back_inserter(brush_batch),
       [&](const node_t& node) {
         return &brushes[node.brush_index];
       });

@@ -1,12 +1,12 @@
 /**
  * @file main.cpp
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2023-07-26
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #include <iostream>
 #include <vector>
@@ -16,9 +16,9 @@
 #include <filesystem>
 #include <cassert>
 #include <library/allocator/allocator.h>
-#include <converter/utils.h>
-#include <converter/parsers/assimp/loader.h>
-#include <converter/parsers/quake/loader.h>
+#include <importer/utils.h>
+#include <importer/parsers/assimp/loader.h>
+#include <importer/parsers/quake/loader.h>
 
 
 std::string data_folder = "";
@@ -60,9 +60,9 @@ void free_block(void* block)
 {
   allocated.erase(
     std::remove_if(
-      allocated.begin(), 
-      allocated.end(), 
-      [=](uintptr_t elem) { return (uintptr_t)block == elem; }), 
+      allocated.begin(),
+      allocated.end(),
+      [=](uintptr_t elem) { return (uintptr_t)block == elem; }),
     allocated.end());
   free(block);
 }
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     load_qmap(scene_file, &allocator);
   else
     load_assimp(scene_file, &allocator);
-  
+
   assert(allocated.size() == 0);
   return 0;
 }

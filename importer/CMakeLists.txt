@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # set the project name
-project(converter VERSION 1.0)
+project(importer VERSION 1.0)
 
 # TODO: should the module dependency be done here, should I download the module
 # here, questions questions...
@@ -35,10 +35,21 @@ add_executable(${PROJECT_NAME}
 				)
 
 target_link_libraries(${PROJECT_NAME}
-        PRIVATE collision
-        PRIVATE assimp
-        PRIVATE loaders
-        PRIVATE entity
+        PUBLIC assimp
+        PUBLIC math
+        PUBLIC library
+        PUBLIC entity
+        PUBLIC collision
+        PUBLIC mesh
+        PUBLIC material
+        PUBLIC texture
+        PUBLIC font
+        PUBLIC spatial
+        PUBLIC loaders
+        PUBLIC level
+        PUBLIC props
+        PUBLIC skeleton
+        PUBLIC animation
 				)
 
 target_include_directories(${PROJECT_NAME} PUBLIC

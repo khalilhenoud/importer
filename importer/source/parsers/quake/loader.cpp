@@ -16,9 +16,9 @@
 #include <library/containers/cvector.h>
 #include <library/streams/binary_stream.h>
 #include <library/filesystem/io.h>
-#include <converter/parsers/quake/loader.h>
-#include <converter/parsers/quake/map.h>
-#include <converter/utils.h>
+#include <importer/parsers/quake/loader.h>
+#include <importer/parsers/quake/map.h>
+#include <importer/utils.h>
 #include <loaders/loader_map.h>
 #include <entity/scene/scene.h>
 

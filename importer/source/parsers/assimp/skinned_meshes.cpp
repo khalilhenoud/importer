@@ -12,8 +12,8 @@
 #include <cstring>
 #include <functional>
 #include <limits>
-#include <converter/parsers/assimp/skinned_meshes.h>
-#include <converter/utils.h>
+#include <importer/parsers/assimp/skinned_meshes.h>
+#include <importer/utils.h>
 #include <assimp/material.h>
 #include <assimp/scene.h>
 #include <assimp/types.h>

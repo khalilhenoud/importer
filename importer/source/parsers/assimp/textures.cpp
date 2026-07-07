@@ -16,8 +16,8 @@
 #include <library/string/cstring.h>
 #include <entity/mesh/texture.h>
 #include <entity/scene/scene.h>
-#include <converter/utils.h>
-#include <converter/parsers/assimp/textures.h>
+#include <importer/utils.h>
+#include <importer/parsers/assimp/textures.h>
 
 
 void

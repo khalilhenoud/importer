@@ -14,7 +14,7 @@
 #include <library/containers/cvector.h>
 #include <entity/misc/font.h>
 #include <entity/scene/scene.h>
-#include <converter/parsers/assimp/fonts.h>
+#include <importer/parsers/assimp/fonts.h>
 
 
 void

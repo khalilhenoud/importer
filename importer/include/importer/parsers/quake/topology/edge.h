@@ -11,7 +11,7 @@
 #pragma once
 
 #include <math/segment.h>
-#include <converter/parsers/quake/topology/point.h>
+#include <importer/parsers/quake/topology/point.h>
 
 
 namespace topology {

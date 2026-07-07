@@ -1,16 +1,16 @@
 /**
  * @file point.cpp
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-08-04
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <cstring>
-#include <converter/parsers/quake/topology/point.h>
-#include <converter/parsers/quake/topology/texture_data.h>
+#include <importer/parsers/quake/topology/point.h>
+#include <importer/parsers/quake/topology/texture_data.h>
 
 
 namespace topology {
@@ -31,7 +31,7 @@ vector3f base_axis[18] =
 static
 void
 get_texture_axis_from_plane(
-  vector3f& xv, 
+  vector3f& xv,
   vector3f& yv,
   const vector3f& normal)
 {
@@ -75,16 +75,16 @@ get_face_texture_vectors(
 
 	// rotate axis
 	if (td.rotation == 0) {
-		sinv = 0; 
+		sinv = 0;
     cosv = 1;
 	} else if (td.rotation == 90) {
-		sinv = 1; 
+		sinv = 1;
     cosv = 0;
 	} else if (td.rotation == 180) {
-		sinv = 0; 
+		sinv = 0;
     cosv = -1;
 	} else if (td.rotation == 270) {
-		sinv = -1; 
+		sinv = -1;
     cosv = 0;
 	} else {
 		ang = TO_RADIANS(td.rotation);
@@ -130,7 +130,7 @@ get_face_texture_vectors(
 
 point3f
 get_texture_coordinates(
-  const point3f& point, 
+  const point3f& point,
   const texture_data_t& texture_data,
   const texture_info_t& texture_info,
   const vector3f& normal)
@@ -141,7 +141,7 @@ get_texture_coordinates(
   point3f p[2] = {
     { STfromXYZ[0][0], STfromXYZ[0][1], STfromXYZ[0][2] },
     { STfromXYZ[1][0], STfromXYZ[1][1], STfromXYZ[1][2] }};
-	
+
   point3f uvw = { 0, 0, 0 };
 	uvw.data[0] = dot_product_v3f(&point, p + 0) + STfromXYZ[0][3];
 	uvw.data[1] = dot_product_v3f(&point, p + 1) + STfromXYZ[1][3];

@@ -34,13 +34,13 @@
 #include <entity/scene/scene.h>
 #include <loaders/loader_map.h>
 #include <loaders/loader_png.h>
-#include <converter/utils.h>
-#include <converter/parsers/quake/topology/brush.h>
-#include <converter/parsers/quake/topology/poly_brush.h>
-#include <converter/parsers/quake/topology/texture_data.h>
-#include <converter/parsers/quake/map.h>
-#include <converter/parsers/quake/bvh_utils.h>
-#include <converter/parsers/quake/string_utils.h>
+#include <importer/utils.h>
+#include <importer/parsers/quake/topology/brush.h>
+#include <importer/parsers/quake/topology/poly_brush.h>
+#include <importer/parsers/quake/topology/texture_data.h>
+#include <importer/parsers/quake/map.h>
+#include <importer/parsers/quake/bvh_utils.h>
+#include <importer/parsers/quake/string_utils.h>
 
 
 struct texture_entry_t {

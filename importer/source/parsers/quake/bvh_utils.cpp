@@ -10,7 +10,7 @@
  */
 #include <assert.h>
 #include <library/allocator/allocator.h>
-#include <converter/parsers/quake/bvh_utils.h>
+#include <importer/parsers/quake/bvh_utils.h>
 #include <entity/spatial/bvh.h>
 #include <entity/mesh/mesh.h>
 #include <entity/scene/node.h>
@@ -85,7 +85,7 @@ build_bvh_node_transformed_data(
             vertices, indices, indices_count, data_index, allocator);
         }
       }
-      
+
       ++i;
     }
 

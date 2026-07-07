@@ -20,8 +20,8 @@
 #include <entity/mesh/texture.h>
 #include <entity/mesh/material.h>
 #include <entity/scene/scene.h>
-#include <converter/utils.h>
-#include <converter/parsers/assimp/materials.h>
+#include <importer/utils.h>
+#include <importer/parsers/assimp/materials.h>
 
 
 std::vector<std::string>

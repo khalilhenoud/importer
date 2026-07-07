@@ -9,8 +9,8 @@
  *
  */
 #include <cassert>
-#include <converter/parsers/assimp/meshes.h>
-#include <converter/utils.h>
+#include <importer/parsers/assimp/meshes.h>
+#include <importer/utils.h>
 #include <assimp/material.h>
 #include <assimp/scene.h>
 #include <assimp/types.h>

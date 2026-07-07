@@ -1,1 +1,1 @@
-build\Debug\converter F:\data\rooms\ F:\converter\tools\ %*
+build\Debug\importer F:\data\rooms\ F:\importer\tools\ %*

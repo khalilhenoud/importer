@@ -1,17 +1,17 @@
 /**
  * @file polygon.cpp
  * @author khalilhenoud@gmail.com
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-07-20
- * 
+ *
  * @copyright Copyright (c) 2025
- * 
+ *
  */
 #include <algorithm>
 #include <unordered_map>
-#include <converter/parsers/quake/topology/polygon.h>
-#include <converter/parsers/quake/topology/point.h>
+#include <importer/parsers/quake/topology/polygon.h>
+#include <importer/parsers/quake/topology/point.h>
 
 
 namespace topology {
@@ -28,7 +28,7 @@ polygon_t::clip(const plane_t& plane) const
       &plane.face, &plane.normal, &point);
     pt_classify.push_back(classification);
     on_positive += classification == POINT_IN_POSITIVE_HALFSPACE;
-    on_negative += classification == POINT_IN_NEGATIVE_HALFSPACE; 
+    on_negative += classification == POINT_IN_NEGATIVE_HALFSPACE;
   }
 
   // to the back or colinear with the plane add to the back
@@ -58,13 +58,13 @@ polygon_t::clip(const plane_t& plane) const
     };
 
     for (uint32_t i = 0, count = points.size(); i < count; ++i) {
-      uint32_t idx0 = i; 
-      uint32_t idx1 = (i + 1) % count; 
-      
+      uint32_t idx0 = i;
+      uint32_t idx1 = (i + 1) % count;
+
       // no splitting is required, simply classify add the starting point
       if (
-        pt_classify[idx0] == pt_classify[idx1] || 
-        pt_classify[idx0] == POINT_ON_PLANE || 
+        pt_classify[idx0] == pt_classify[idx1] ||
+        pt_classify[idx0] == POINT_ON_PLANE ||
         pt_classify[idx1] == POINT_ON_PLANE)
         classify_add(idx0);
       else {
@@ -108,8 +108,8 @@ polygon_t::triangulate() const
       uint32_t i_after = (i_at + 1) % count;
 
       ::face_t tri = {
-        polygon.points[i_before], 
-        polygon.points[i_at], 
+        polygon.points[i_before],
+        polygon.points[i_at],
         polygon.points[i_after]};
 
       vector3f tri_normal;
@@ -125,11 +125,11 @@ polygon_t::triangulate() const
 
           point3f closest;
           auto pt_iter = polygon.points.begin() + vert_i;
-          coplanar_point_classification_t classify = 
+          coplanar_point_classification_t classify =
           classify_coplanar_point_face(
-            &tri, 
-            &tri_normal, 
-            &(*pt_iter), 
+            &tri,
+            &tri_normal,
+            &(*pt_iter),
             &closest);
 
           if (classify == COPLANAR_POINT_ON_OR_INSIDE) {
@@ -146,7 +146,7 @@ polygon_t::triangulate() const
           vector3f_set_diff_v3f(&vec1, tri.points + 1, tri.points + 2);
           normalize_set_v3f(&vec1);
           float dot = dot_product_v3f(&vec0, &vec1);
-          if (dot < 0) 
+          if (dot < 0)
             dot = K_PI - acosf(fabs(dot));
           else
             dot = acosf(dot);
@@ -158,10 +158,10 @@ polygon_t::triangulate() const
     {
       // clip the ear with the largest angle.
       auto ear = std::max_element(
-        std::begin(i_to_angle), 
-        std::end(i_to_angle), 
+        std::begin(i_to_angle),
+        std::end(i_to_angle),
         [](
-          const std::pair<uint32_t, float>& p1, 
+          const std::pair<uint32_t, float>& p1,
           const std::pair<uint32_t, float>& p2) {
           return p1.second < p2.second;});
 
@@ -170,8 +170,8 @@ polygon_t::triangulate() const
       uint32_t i_after = (i_at + 1) % count;
 
       ::face_t tri = {
-        polygon.points[i_before], 
-        polygon.points[i_at], 
+        polygon.points[i_before],
+        polygon.points[i_at],
         polygon.points[i_after]};
 
       point3f uv[3];
@@ -187,7 +187,7 @@ polygon_t::triangulate() const
         normal,
         polygon.texture,
         polygon.texture_data,
-        polygon.texture_info, 
+        polygon.texture_info,
         { uv[0], uv[1], uv[2] }});
       polygon.points.erase(polygon.points.begin() + i_at);
     }
@@ -197,7 +197,7 @@ polygon_t::triangulate() const
     polygon.points[0],
     polygon.points[1],
     polygon.points[2] };
-  
+
   point3f uv[3];
   uv[0] = get_texture_coordinates(
     tri.points[0], polygon.texture_data, polygon.texture_info, normal);
@@ -205,7 +205,7 @@ polygon_t::triangulate() const
     tri.points[1], polygon.texture_data, polygon.texture_info, normal);
   uv[2] = get_texture_coordinates(
     tri.points[2], polygon.texture_data, polygon.texture_info, normal);
-  
+
   tris.push_back({
     tri,
     normal,

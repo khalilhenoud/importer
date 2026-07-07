@@ -12,8 +12,8 @@
 #include <cassert>
 #include <functional>
 #include <vector>
-#include <converter/parsers/assimp/nodes.h>
-#include <converter/utils.h>
+#include <importer/parsers/assimp/nodes.h>
+#include <importer/utils.h>
 #include <assimp/material.h>
 #include <assimp/scene.h>
 #include <assimp/types.h>

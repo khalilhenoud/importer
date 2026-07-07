@@ -9,8 +9,8 @@
  *
  */
 #include <cassert>
-#include <converter/parsers/assimp/animations.h>
-#include <converter/utils.h>
+#include <importer/parsers/assimp/animations.h>
+#include <importer/utils.h>
 #include <assimp/scene.h>
 #include <assimp/types.h>
 #include <entity/scene/animation.h>

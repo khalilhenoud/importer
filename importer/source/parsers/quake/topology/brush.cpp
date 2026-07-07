@@ -8,9 +8,9 @@
  * @copyright Copyright (c) 2025
  *
  */
-#include <converter/parsers/quake/string_utils.h>
-#include <converter/parsers/quake/topology/brush.h>
-#include <converter/parsers/quake/topology/edge.h>
+#include <importer/parsers/quake/string_utils.h>
+#include <importer/parsers/quake/topology/brush.h>
+#include <importer/parsers/quake/topology/edge.h>
 #include <loaders/loader_map.h>
 #include <math/vector3f.h>
 #include <math/matrix4f.h>

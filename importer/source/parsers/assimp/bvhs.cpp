@@ -18,8 +18,8 @@
 #include <library/string/cstring.h>
 #include <entity/spatial/bvh.h>
 #include <entity/scene/scene.h>
-#include <converter/utils.h>
-#include <converter/parsers/quake/bvh_utils.h>
+#include <importer/utils.h>
+#include <importer/parsers/quake/bvh_utils.h>
 
 
 void
