@@ -15,16 +15,11 @@
 #include <functional>
 #include <filesystem>
 #include <cassert>
-#include <library/allocator/allocator.h>
 #include <importer/utils.h>
-#include <importer/parsers/assimp/loader.h>
-#include <importer/parsers/quake/loader.h>
+#include <library/allocator/allocator.h>
 
 
-std::string data_folder = "";
-std::string tools_folder = "";
-
-std::vector<uintptr_t> allocated;
+static std::vector<uintptr_t> allocated;
 
 void* allocate(size_t size)
 {
@@ -76,15 +71,14 @@ int main(int argc, char *argv[])
   allocator.mem_alloc_alligned = nullptr;
   allocator.mem_realloc = reallocate;
 
-  assert(argc >= 4 && "provide path to mesh file!");
-  data_folder = argv[1];
-  tools_folder = argv[2];
-  const char* scene_file = argv[3];
+  // NOTE: the tools_folder is going to be specified in the batch file, or
+  // copied into the executable folder.
+  assert(argc >= 3 && "incorrect number of arguments!");
+  const char *source_file = argv[1];
+  const char *target_dir = argv[2];
 
-  if (get_extension(scene_file) == "map")
-    load_qmap(scene_file, &allocator);
-  else
-    load_assimp(scene_file, &allocator);
+  uint32_t result = import(source_file, target_dir);
+  assert(result);
 
   assert(allocated.size() == 0);
   return 0;
