@@ -8,15 +8,15 @@
  * @copyright Copyright (c) 2023
  *
  */
-#include <iostream>
-#include <vector>
-#include <malloc.h>
 #include <algorithm>
-#include <functional>
-#include <filesystem>
 #include <cassert>
-#include <importer/utils.h>
+#include <filesystem>
+#include <functional>
+#include <iostream>
+#include <malloc.h>
+#include <vector>
 #include <importer/importer.h>
+#include <importer/utils.h>
 #include <library/allocator/allocator.h>
 
 
@@ -25,7 +25,7 @@ static std::vector<uintptr_t> allocated;
 void *
 allocate(size_t size)
 {
-  void* block = malloc(size);
+  void *block = malloc(size);
   allocated.push_back(uintptr_t(block));
   return block;
 }
@@ -33,7 +33,7 @@ allocate(size_t size)
 void *
 container_allocate(size_t count, size_t elem_size)
 {
-  void* block = calloc(count, elem_size);
+  void *block = calloc(count, elem_size);
   allocated.push_back(uintptr_t(block));
   return block;
 }
@@ -41,7 +41,7 @@ container_allocate(size_t count, size_t elem_size)
 void *
 reallocate(void *block, size_t size)
 {
-  void* tmp = realloc(block, size);
+  void *tmp = realloc(block, size);
   assert(tmp);
 
   uintptr_t item = (uintptr_t)block;

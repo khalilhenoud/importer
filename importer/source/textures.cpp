@@ -9,8 +9,8 @@
  *
  */
 #include <importer/textures.h>
-#include <loaders/loader_png.h>
 #include <library/allocator/allocator.h>
+#include <loaders/loader_png.h>
 
 
 uint32_t

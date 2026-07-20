@@ -16,8 +16,8 @@
 
 uint32_t
 import(
-  const std::string &source_file, 
-  const std::string &target_dir, 
+  const std::string &source_file,
+  const std::string &target_dir,
   const allocator_t *allocator)
 {
   assert(!source_file.empty());
