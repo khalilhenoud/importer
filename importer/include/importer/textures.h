@@ -10,9 +10,14 @@
  */
 #pragma once
 
-#include <stdint>
+#include <cstdint>
 #include <string>
 
 
+struct allocator_t;
+
 uint32_t
-import_texture(std::string source_file, std::string target_dir);
+import_texture(
+  const std::string &source_file,
+  const std::string &target_dir,
+  const allocator_t *allocator);

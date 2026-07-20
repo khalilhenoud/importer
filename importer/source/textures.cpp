@@ -9,9 +9,16 @@
  *
  */
 #include <importer/textures.h>
-#include <
+#include <loaders/loader_png.h>
+#include <library/allocator/allocator.h>
 
 
 uint32_t
-import_texture(std::string source_file, std::string target_dir)
-{}
+import_texture(
+    const std::string &source_file,
+    const std::string &target_dir,
+    const allocator_t *allocator)
+{
+    loader_png_data_t *data = load_png(source_file.c_str(), allocator);
+    return 1;
+}

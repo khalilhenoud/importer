@@ -10,10 +10,15 @@
  */
 #pragma once
 
-#include <stdint>
+#include <cstdint>
 #include <string>
 
 
+struct allocator_t;
+
 // returns non-zero on success, otherwise 0.
 uint32_t
-import(std::string source_file, std::string target_dir);
+import(
+    const std::string &source_file,
+    const std::string &target_dir,
+    const allocator_t *allocator);

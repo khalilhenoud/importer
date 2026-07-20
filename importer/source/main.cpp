@@ -16,26 +16,30 @@
 #include <filesystem>
 #include <cassert>
 #include <importer/utils.h>
+#include <importer/importer.h>
 #include <library/allocator/allocator.h>
 
 
 static std::vector<uintptr_t> allocated;
 
-void* allocate(size_t size)
+void *
+allocate(size_t size)
 {
   void* block = malloc(size);
   allocated.push_back(uintptr_t(block));
   return block;
 }
 
-void* container_allocate(size_t count, size_t elem_size)
+void *
+container_allocate(size_t count, size_t elem_size)
 {
   void* block = calloc(count, elem_size);
   allocated.push_back(uintptr_t(block));
   return block;
 }
 
-void* reallocate(void* block, size_t size)
+void *
+reallocate(void *block, size_t size)
 {
   void* tmp = realloc(block, size);
   assert(tmp);
@@ -51,7 +55,8 @@ void* reallocate(void* block, size_t size)
   return block;
 }
 
-void free_block(void* block)
+void
+free_block(void *block)
 {
   allocated.erase(
     std::remove_if(
@@ -62,7 +67,8 @@ void free_block(void* block)
   free(block);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
   allocator_t allocator;
   allocator.mem_alloc = allocate;
@@ -74,10 +80,10 @@ int main(int argc, char *argv[])
   // NOTE: the tools_folder is going to be specified in the batch file, or
   // copied into the executable folder.
   assert(argc >= 3 && "incorrect number of arguments!");
-  const char *source_file = argv[1];
-  const char *target_dir = argv[2];
+  std::string source_file = argv[1];
+  std::string target_dir = argv[2];
 
-  uint32_t result = import(source_file, target_dir);
+  uint32_t result = import(source_file, target_dir, &allocator);
   assert(result);
 
   assert(allocated.size() == 0);

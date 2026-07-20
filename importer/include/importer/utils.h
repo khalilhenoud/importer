@@ -19,7 +19,7 @@
 #include <math/quatf.h>
 #include <math/vector3f.h>
 #include <entity/mesh/material.h>
-#include <entity/mesh/color.h>
+#include <props/color.h>
 
 
 typedef struct allocator_t allocator_t;
@@ -146,13 +146,10 @@ get_simple_name(std::string path)
 
 inline
 std::string
-get_extension(std::string path)
+get_extension(const std::string &path)
 {
-  path = path.substr(path.find_last_of("/\\") + 1);
-  std::string with_extension = path;
-  std::string extension =
-    with_extension.substr(with_extension.find_last_of(".") + 1);
-  return extension;
+  std::string file_name = path.substr(path.find_last_of("/\\") + 1);
+  return file_name.substr(file_name.find_last_of(".") + 1);
 }
 
 inline
