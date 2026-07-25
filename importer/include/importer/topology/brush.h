@@ -15,8 +15,8 @@
 #include <string>
 #include <optional>
 #include <unordered_map>
-#include <importer/parsers/quake/topology/polygon.h>
-#include <importer/parsers/quake/topology/texture_data.h>
+#include <importer/topology/polygon.h>
+#include <importer/topology/texture_data.h>
 
 
 typedef struct loader_map_brush_data_t loader_map_brush_data_t;

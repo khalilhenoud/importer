@@ -10,8 +10,8 @@
  */
 #include <algorithm>
 #include <unordered_map>
-#include <importer/parsers/quake/topology/polygon.h>
-#include <importer/parsers/quake/topology/point.h>
+#include <importer/topology/polygon.h>
+#include <importer/topology/point.h>
 
 
 namespace topology {

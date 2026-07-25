@@ -14,7 +14,7 @@
 #include <importer/utils.h>
 
 
-uint32_t
+void
 import(
   const std::string &source_file,
   const std::string &target_dir)
@@ -27,6 +27,4 @@ import(
     return import_texture(source_file, target_dir);
   else if (extension == "map")
     return import_map(source_file, target_dir);
-
-  return 0;
 }

@@ -111,30 +111,33 @@ struct allocator_t;
 //   }
 // }
 
-// inline
-// std::vector<std::filesystem::path>
-// get_all_files_in_directory(std::string directory)
-// {
-//   std::vector<std::filesystem::path> files;
-//   for (const auto& entry : std::filesystem::directory_iterator(directory))
-//     files.push_back(entry.path());
-//   return files;
-// }
+inline
+std::string
+get_simple_name(const std::string &path)
+{
+  std::string simple_name = path.substr(path.find_last_of("\\") + 1);
+  return simple_name.substr(0, simple_name.find_last_of("."));
+}
 
-// inline
-// void
-// ensure_clean_directory(std::string directory)
-// {
-//   if (std::filesystem::exists(directory)) {
-//     // delete the folder if it already exists.
-//     bool success = std::filesystem::remove_all(directory);
-//     assert(success && "failed to remove the directory and its content");
-//   }
+inline
+std::vector<std::filesystem::path>
+get_all_files(const std::string &directory)
+{
+  std::vector<std::filesystem::path> files;
+  for (const auto &entry : std::filesystem::directory_iterator(directory))
+    files.push_back(entry.path());
+  return files;
+}
 
-//   // create the folder anew.
-//   bool success = std::filesystem::create_directory(directory);
-//   assert(success && "failed to create the directory");
-// }
+inline
+void
+ensure_clean_directory(const std::string &directory)
+{
+  if (std::filesystem::exists(directory))
+    assert(std::filesystem::remove_all(directory));
+
+  assert(std::filesystem::create_directory(directory));
+}
 
 inline
 void

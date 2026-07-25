@@ -14,7 +14,12 @@
 #include <string>
 
 
-uint32_t
+struct texture_info_t {
+  uint32_t width;
+  uint32_t height;
+};
+
+texture_info_t
 import_texture(
   const std::string &source_file,
   const std::string &target_dir);

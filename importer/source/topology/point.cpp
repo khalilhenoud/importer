@@ -9,8 +9,8 @@
  *
  */
 #include <cstring>
-#include <importer/parsers/quake/topology/point.h>
-#include <importer/parsers/quake/topology/texture_data.h>
+#include <importer/topology/point.h>
+#include <importer/topology/texture_data.h>
 
 
 namespace topology {

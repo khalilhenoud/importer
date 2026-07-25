@@ -13,8 +13,8 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <importer/parsers/quake/topology/texture_data.h>
-#include <importer/parsers/quake/topology/edge.h>
+#include <importer/topology/texture_data.h>
+#include <importer/topology/edge.h>
 #include <math/vector3f.h>
 #include <collision/face.h>
 

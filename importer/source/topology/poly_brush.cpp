@@ -10,8 +10,8 @@
  */
 #include <algorithm>
 #include <iterator>
-#include <importer/parsers/quake/topology/aabb.h>
-#include <importer/parsers/quake/topology/poly_brush.h>
+#include <importer/topology/aabb.h>
+#include <importer/topology/poly_brush.h>
 
 
 namespace topology {

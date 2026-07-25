@@ -11,7 +11,7 @@
 #pragma once
 
 #include <functional>
-#include <importer/parsers/quake/topology/brush.h>
+#include <importer/topology/brush.h>
 
 
 namespace topology {

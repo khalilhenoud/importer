@@ -14,7 +14,7 @@
 #include <string>
 
 
-uint32_t
+void
 import_map(
   const std::string &source_file,
   const std::string &target_dir);

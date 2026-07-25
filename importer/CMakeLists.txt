@@ -16,10 +16,10 @@ add_executable(${PROJECT_NAME}
 				./source/main.cpp
         ./source/sublevels.cpp
         ./source/textures.cpp
-        # ./source/parsers/quake/topology/point.cpp
-        # ./source/parsers/quake/topology/brush.cpp
-        # ./source/parsers/quake/topology/poly_brush.cpp
-        # ./source/parsers/quake/topology/polygon.cpp
+        ./source/topology/point.cpp
+        ./source/topology/brush.cpp
+        ./source/topology/poly_brush.cpp
+        ./source/topology/polygon.cpp
         # ./source/parsers/quake/string_utils.cpp
         # ./source/parsers/quake/bvh_utils.cpp
         # ./source/parsers/quake/loader.cpp

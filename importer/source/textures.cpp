@@ -20,7 +20,7 @@
 #include <texture/texture_asset.h>
 
 
-uint32_t
+texture_info_t
 import_texture(
   const std::string &source_file,
   const std::string &target_dir)
@@ -39,6 +39,8 @@ import_texture(
   asset.width = data->width;
   asset.height = data->height;
 
+  texture_info_t info = { data->width, data->height };
+
   // serialize to file
   binary_stream_t stream;
   binary_stream_def(&stream);
@@ -54,5 +56,6 @@ import_texture(
 
   binary_stream_cleanup(&stream);
   free_png(data, &g_default_allocator);
-  return 1;
+
+  return info;
 }

@@ -21,7 +21,5 @@ main(int argc, char *argv[])
   std::string source_file = argv[1];
   std::string target_dir = argv[2];
 
-  uint32_t result = import(source_file, target_dir);
-  assert(result);
-  return 0;
+  import(source_file, target_dir);
 }
