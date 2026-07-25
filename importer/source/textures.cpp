@@ -23,10 +23,9 @@
 uint32_t
 import_texture(
   const std::string &source_file,
-  const std::string &target_dir,
-  const allocator_t *allocator)
+  const std::string &target_dir)
 {
-  loader_png_data_t *data = load_png(source_file.c_str(), allocator);
+  loader_png_data_t *data = load_png(source_file.c_str(), &g_default_allocator);
   assert(data);
 
   texture_asset_t asset;
@@ -34,7 +33,7 @@ import_texture(
       &asset.buffer,
       get_type_data(uint8_t),
       data->total_buffer_size,
-      allocator);
+      &g_default_allocator);
   memcpy(asset.buffer.data, data->buffer, data->total_buffer_size);
   asset.format = (texture_format_t)data->format;
   asset.width = data->width;
@@ -43,7 +42,7 @@ import_texture(
   // serialize to file
   binary_stream_t stream;
   binary_stream_def(&stream);
-  binary_stream_setup(&stream, allocator);
+  binary_stream_setup(&stream, &g_default_allocator);
   texture_asset_serialize(&asset, &stream);
 
   std::string simple_name = get_simple_name(source_file);
@@ -54,6 +53,6 @@ import_texture(
   write_to_file(stream, target_file);
 
   binary_stream_cleanup(&stream);
-  free_png(data, allocator);
+  free_png(data, &g_default_allocator);
   return 1;
 }

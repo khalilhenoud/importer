@@ -1,9 +1,9 @@
 /**
- * @file textures.h
+ * @file sublevels.h
  * @author khalilhenoud@gmail.com
  * @brief
  * @version 0.1
- * @date 2026-07-09
+ * @date 2026-07-23
  *
  * @copyright Copyright (c) 2026
  *
@@ -15,6 +15,6 @@
 
 
 uint32_t
-import_texture(
+import_map(
   const std::string &source_file,
   const std::string &target_dir);

@@ -12,9 +12,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_executable(${PROJECT_NAME}
-				./source/main.cpp
-        ./source/textures.cpp
         ./source/importer.cpp
+				./source/main.cpp
+        ./source/sublevels.cpp
+        ./source/textures.cpp
         # ./source/parsers/quake/topology/point.cpp
         # ./source/parsers/quake/topology/brush.cpp
         # ./source/parsers/quake/topology/poly_brush.cpp
