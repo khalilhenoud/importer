@@ -9,17 +9,24 @@
  *
  */
 #include <cassert>
+#include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <importer/sublevels.h>
 #include <importer/textures.h>
+#include <importer/topology/poly_brush.h>
+#include <importer/topology/polygon.h>
 #include <importer/utils.h>
 #include <level/sublevel_asset.h>
 #include <library/allocator/allocator.h>
-#include <library/filesystem/io.h>
 #include <library/streams/binary_stream.h>
+#include <library/string/cstring.h>
 #include <library/type_registry/type_registry.h>
 #include <loaders/loader_map.h>
+#include <material/bulk_material_asset.h>
+#include <material/material_asset.h>
+#include <texture/texture_asset.h>
 
 
 struct texture_entry_t {
@@ -29,9 +36,13 @@ struct texture_entry_t {
 
 using sanitized_path_t = std::string;
 using texture_map_t = std::unordered_map<sanitized_path_t, texture_entry_t>;
+using face_ids_t = std::vector<uint32_t>;
+using texture_face_map_t = std::unordered_map<sanitized_path_t, face_ids_t>;
+using topological_faces_t = std::vector<topology::face_t>;
 
 // extracts the textures from the wad into a temporary folder. we then import
 // the pngs, and delete the temporary folder.
+static
 void
 extract_textures(
   const std::string &source_file,
@@ -39,22 +50,48 @@ extract_textures(
   texture_map_t &texture_map,
   std::string wad_file_relative);
 
+static
+void
+extract_faces(
+  const loader_map_data_t *map,
+  const texture_map_t &texture_map,
+  topological_faces_t &topological_faces,
+  texture_face_map_t &tface_map);
+
+static
+void
+extract_materials(
+  const texture_map_t &texture_map,
+  const std::string &target_dir,
+  const std::string &map_name);
+
 void
 import_map(
   const std::string &source_file,
   const std::string &target_dir)
 {
+  std::string map_name = get_simple_name(source_file);
   loader_map_data_t *map = load_map(source_file.c_str(), &g_default_allocator);
 
+  // extract textures
   texture_map_t texture_map;
   extract_textures(source_file, target_dir, texture_map, map->world.wad);
 
+  // extract bulk material
+  extract_materials(const texture_map_t &texture_map, target_dir, map_name);
+
+  topological_faces_t topological_faces_t;
+  texture_face_map_t tface_map;
+  extract_faces(map, texture_map, topological_faces_t, tface_map);
+
+  // extract bulk meshes
 
   free_map(map, &g_default_allocator);
 
   return 1;
 }
 
+static
 void
 extract_textures(
   const std::string &source_file,
@@ -104,6 +141,107 @@ extract_textures(
 
   // cleanup
   assert(std::filesystem::remove_all(extraction_dir));
+}
 
-  return textures;
+static
+void
+set_mat_rgb(mat_rgba_t &color, float r, float g, float b, float a = 1.f)
+{
+  color.data[0] = r;
+  color.data[1] = g;
+  color.data[2] = b;
+  color.data[3] = a;
+}
+
+static
+void
+setup_material_asset(
+  material_asset_t &material,
+  const std::string &target_dir,
+  const std::string &name)
+{
+  std::string type_dir = texture_asset_get_dir();
+  std::string target_bin = target_dir + "\\" + type_dir + "\\" + name + ".bin";
+
+  material_asset_def(&material);
+  cstring_setup2(&material.name, name.c_str());
+  material.opacity = 1.f;
+  material.shininess = 1.f;
+  set_mat_rgb(material.ambient, 0.5f, 0.5f, 0.5f);
+  set_mat_rgb(material.diffuse, 0.6f, 0.6f, 0.6f);
+  set_mat_rgb(material.specular, 0.6f, 0.6f, 0.6f);
+
+  cvector_setup2(&material.textures, get_type_data(texture_properties_t));
+  texture_properties_t texture = {};
+  texture.texture_ref.type_id = get_type_id(texture_asset_t);
+  cstring_setup2(&texture.texture_ref.path, target_bin.c_str());
+  cvector_push_back(&material.textures, texture, texture_properties_t);
+}
+
+void
+extract_materials(
+  const texture_map_t &texture_map,
+  const std::string &target_dir,
+  const std::string &map_name)
+{
+  bulk_material_asset_t asset;
+
+  // 1- setup the asset.
+  cvector_setup2(&asset.materials, get_type_data(material_asset_t));
+  for (const auto &entry : texture_map) {
+    material_asset_t material;
+    setup_material_asset(material, target_dir, entry.second.path);
+    cvector_push_back
+  }
+
+  binary_stream_t stream;
+  binary_stream_def(&stream);
+  binary_stream_setup(&stream, &g_default_allocator);
+  bulk_material_asset_serialize(&asset, &stream);
+
+  std::string type_dir = bulk_material_asset_get_dir();
+  std::string target_bin = target_dir + "\\" + type_dir;
+  ensure_directory(target_bin);
+  std::string target_file = target_bin + "\\" + map_name + ".bin";
+  write_to_file(stream, target_file);
+
+  binary_stream_cleanup(&stream);
+  bulk_material_asset_cleanup(&asset, &g_default_allocator);
+}
+
+static
+void
+extract_faces(
+  const loader_map_data_t *map,
+  const texture_map_t &texture_map,
+  topological_faces_t &topological_faces,
+  texture_face_map_t &tface_map)
+{
+  // convert to the format the brush expect
+  std::unordered_map<std::string, topology::texture_info_t> textures_info;
+  for (const auto &entry : texture_map)
+    textures_info[entry.first] = {
+      entry.second.info.width, entry.second.info.height };
+
+  std::vector<topology::poly_brush_t> poly_brushes;
+  for (uint32_t i = 0; i < map_data->world.brush_count; ++i) {
+    const topology::brush_t brush(map_data->world.brushes + i, textures_info);
+    poly_brushes.emplace_back(&brush);
+  }
+
+  topology::poly_brush_t::sort_and_weld(poly_brushes);
+
+  for (uint32_t i = 0; i < poly_brushes.size(); ++i) {
+    const topology::poly_brush_t &poly_brush = poly_brushes[i];
+    std::vector<topology::face_t> faces = poly_brush.to_faces();
+
+    for (uint32_t j = 0; j < faces.size(); ++j) {
+      auto& face = faces[j];
+      if (face.texture.size())
+        tface_map[face.texture].push_back(topological_faces.size() + j);
+    }
+
+    topological_faces.insert(
+      topological_faces.end(), faces.begin(), faces.end());
+  }
 }

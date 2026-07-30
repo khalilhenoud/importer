@@ -13,7 +13,6 @@
 #include <importer/textures.h>
 #include <importer/utils.h>
 #include <library/allocator/allocator.h>
-#include <library/filesystem/io.h>
 #include <library/streams/binary_stream.h>
 #include <library/type_registry/type_registry.h>
 #include <loaders/loader_png.h>
@@ -56,6 +55,7 @@ import_texture(
 
   binary_stream_cleanup(&stream);
   free_png(data, &g_default_allocator);
+  texture_asset_cleanup(&asset, &g_default_allocator);
 
   return info;
 }
