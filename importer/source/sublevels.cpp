@@ -40,8 +40,6 @@ using face_ids_t = std::vector<uint32_t>;
 using texture_face_map_t = std::unordered_map<sanitized_path_t, face_ids_t>;
 using topological_faces_t = std::vector<topology::face_t>;
 
-// extracts the textures from the wad into a temporary folder. we then import
-// the pngs, and delete the temporary folder.
 static
 void
 extract_textures(
@@ -70,21 +68,19 @@ import_map(
   const std::string &source_file,
   const std::string &target_dir)
 {
-  std::string map_name = get_simple_name(source_file);
   loader_map_data_t *map = load_map(source_file.c_str(), &g_default_allocator);
+  std::string simple_wad_name = get_simple_name(map->world.wad);
 
   // extract textures
   texture_map_t texture_map;
   extract_textures(source_file, target_dir, texture_map, map->world.wad);
-
-  // extract bulk material
-  extract_materials(const texture_map_t &texture_map, target_dir, map_name);
+  extract_materials(texture_map, target_dir, simple_wad_name);
 
   topological_faces_t topological_faces_t;
   texture_face_map_t tface_map;
   extract_faces(map, texture_map, topological_faces_t, tface_map);
 
-  // extract bulk meshes
+  // extract bulk meshes, where each mesh references an indexed_material_asset_t
 
   free_map(map, &g_default_allocator);
 
@@ -160,21 +156,17 @@ setup_material_asset(
   const std::string &target_dir,
   const std::string &name)
 {
-  std::string type_dir = texture_asset_get_dir();
-  std::string target_bin = target_dir + "\\" + type_dir + "\\" + name + ".bin";
-
   material_asset_def(&material);
   cstring_setup2(&material.name, name.c_str());
-  material.opacity = 1.f;
-  material.shininess = 1.f;
+  material.opacity = material.shininess = 1.f;
   set_mat_rgb(material.ambient, 0.5f, 0.5f, 0.5f);
-  set_mat_rgb(material.diffuse, 0.6f, 0.6f, 0.6f);
-  set_mat_rgb(material.specular, 0.6f, 0.6f, 0.6f);
+  set_mat_rgb(material.diffuse, 0.5f, 0.5f, 0.5f);
+  set_mat_rgb(material.specular, 0.5f, 0.5f, 0.5f);
 
   cvector_setup2(&material.textures, get_type_data(texture_properties_t));
   texture_properties_t texture = {};
   texture.texture_ref.type_id = get_type_id(texture_asset_t);
-  cstring_setup2(&texture.texture_ref.path, target_bin.c_str());
+  cstring_setup2(&texture.texture_ref.path, name.c_str());
   cvector_push_back(&material.textures, texture, texture_properties_t);
 }
 
@@ -184,14 +176,13 @@ extract_materials(
   const std::string &target_dir,
   const std::string &map_name)
 {
-  bulk_material_asset_t asset;
+  bulk_material_asset_t asset = {};
 
-  // 1- setup the asset.
   cvector_setup2(&asset.materials, get_type_data(material_asset_t));
   for (const auto &entry : texture_map) {
     material_asset_t material;
     setup_material_asset(material, target_dir, entry.second.path);
-    cvector_push_back
+    cvector_push_back(&asset, &material, material_asset_t);
   }
 
   binary_stream_t stream;
