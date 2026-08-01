@@ -25,7 +25,9 @@
 #include <library/type_registry/type_registry.h>
 #include <loaders/loader_map.h>
 #include <material/bulk_material_asset.h>
+#include <material/indexed_material_asset.h>
 #include <material/material_asset.h>
+#include <mesh/mesh_asset.h>
 #include <texture/texture_asset.h>
 
 
@@ -61,7 +63,14 @@ void
 extract_materials(
   const texture_map_t &texture_map,
   const std::string &target_dir,
-  const std::string &map_name);
+  const std::string &wad_file);
+
+static
+void
+extract_meshes(
+  const texture_map_t &texture_map,
+  const topological_faces_t &topological_faces,
+  const texture_face_map_t &tface_map);
 
 void
 import_map(
@@ -76,15 +85,140 @@ import_map(
   extract_textures(source_file, target_dir, texture_map, map->world.wad);
   extract_materials(texture_map, target_dir, simple_wad_name);
 
-  topological_faces_t topological_faces_t;
+  topological_faces_t topological_faces;
   texture_face_map_t tface_map;
-  extract_faces(map, texture_map, topological_faces_t, tface_map);
+  extract_faces(map, texture_map, topological_faces, tface_map);
 
   // extract bulk meshes, where each mesh references an indexed_material_asset_t
+  extract_meshes(texture_map, topological_faces, tface_map);
 
   free_map(map, &g_default_allocator);
 
   return 1;
+}
+
+static
+void
+setup_mesh(
+  const std::pair<const sanitized_path_t, texture_entry_t> &entry,
+  const topological_faces_t &topological_faces,
+  const texture_face_map_t &tface_map,
+  mesh_asset_t &mesh)
+{
+  auto &face_indices = tface_map[entry.first];
+  uint32_t face_count = face_indices.size();
+  uint32_t vertices_count = face_count * 3;
+  cvector_setup(&mesh.vertices, get_type_data(float), 0, allocator);
+  cvector_resize(&mesh.vertices, vertices_count * 3);
+  cvector_setup(&mesh.normals, get_type_data(float), 0, allocator);
+  cvector_resize(&mesh.normals, vertices_count * 3);
+  cvector_setup(&mesh.uvs, get_type_data(float), 0, allocator);
+  cvector_resize(&mesh.uvs, vertices_count * 3);
+  memset(mesh.uvs.data, 0, sizeof(float) * vertices_count * 3);
+  cvector_setup(&mesh.indices, get_type_data(uint32_t), 0, allocator);
+  cvector_resize(&mesh.indices, vertices_count);
+
+  // set the mesh specific data: vertices, uvs, indices, etc...
+  uint32_t verti = 0, indexi = 0;
+  uint32_t sizef3 = sizeof(float) * 3;
+  float *vertices = (float *)mesh.vertices.data;
+  float *normals = (float *)mesh.normals.data;
+  float *uvs = (float *)mesh.uvs.data;
+  uint32_t *indices = (uint32_t *)mesh.indices.data;
+  for (uint32_t k = 0; k < face_count; ++k) {
+    auto& face = topological_faces[face_indices[k]];
+    point3f *points = face.face.points;
+    memcpy(vertices + (verti + 0) * 3, points[0].data, sizef3);
+    memcpy(vertices + (verti + 1) * 3, points[1].data, sizef3);
+    memcpy(vertices + (verti + 2) * 3, points[2].data, sizef3);
+    memcpy(normals + (verti + 0) * 3, face.normal.data, sizef3);
+    memcpy(normals + (verti + 1) * 3, face.normal.data, sizef3);
+    memcpy(normals + (verti + 2) * 3, face.normal.data, sizef3);
+    memcpy(uvs + (verti + 0) * 3, face.uv[0].data, sizef3);
+    memcpy(uvs + (verti + 1) * 3, face.uv[1].data, sizef3);
+    memcpy(uvs + (verti + 2) * 3, face.uv[2].data, sizef3);
+
+    indices[indexi + 0] = verti + 0;
+    indices[indexi + 1] = verti + 1;
+    indices[indexi + 2] = verti + 2;
+
+    indexi += 3;
+    verti += 3;
+  }
+
+  // 2- serialize an indexed_material_asset.h
+  // 3- set the mesh material to point to the indexed_material_asset.h
+}
+
+void
+extract_meshes(
+  const texture_map_t &texture_map,
+  const topological_faces_t &topological_faces,
+  const texture_face_map_t &tface_map)
+{
+  bulk_mesh_asset_t asset = {};
+  cvector_setup(
+    &asset.meshes,
+    get_type_data(mesh_asset_t),
+    texture_map.size(),
+    g_default_allocator);
+
+  for (const auto &entry : texture_map) {
+    mesh_asset_t mesh = {};
+    setup_mesh(entry, topological_faces, tface_map, mesh);
+    cvector_push_back(&asset.meshes, mesh, mesh_asset_t)
+  }
+
+  for (auto& entry : tex_map) {
+    uint32_t i = entry.second.index;
+    mesh_t *mesh = cvector_as(&scene->mesh_repo, i, mesh_t);
+    mesh_def(mesh);
+
+    // get the faces that share this index texture-material.
+    auto& face_indices = entry.second.indices;
+    uint32_t face_count = face_indices.size();
+    uint32_t vertices_count = face_count * 3;
+    uint32_t sizef3 = sizeof(float) * 3;
+
+    cvector_setup(&mesh->vertices, get_type_data(float), 0, allocator);
+    cvector_resize(&mesh->vertices, vertices_count * 3);
+    cvector_setup(&mesh->normals, get_type_data(float), 0, allocator);
+    cvector_resize(&mesh->normals, vertices_count * 3);
+    cvector_setup(&mesh->uvs, get_type_data(float), 0, allocator);
+    cvector_resize(&mesh->uvs, vertices_count * 3);
+    memset(mesh->uvs.data, 0, sizeof(float) * vertices_count * 3);
+    cvector_setup(&mesh->indices, get_type_data(uint32_t), 0, allocator);
+    cvector_resize(&mesh->indices, vertices_count);
+    mesh->materials.used = 1;
+    mesh->materials.indices[0] = i;
+
+    // copy the data into the mesh.
+    uint32_t verti = 0, indexi = 0;
+    float *vertices = (float *)mesh->vertices.data;
+    float *normals = (float *)mesh->normals.data;
+    float *uvs = (float *)mesh->uvs.data;
+    uint32_t *indices = (uint32_t *)mesh->indices.data;
+    for (uint32_t k = 0; k < face_count; ++k) {
+      auto& face = map_faces[face_indices[k]];
+      point3f* points = face.face.points;
+      memcpy(vertices + (verti + 0) * 3, points[0].data, sizef3);
+      memcpy(vertices + (verti + 1) * 3, points[1].data, sizef3);
+      memcpy(vertices + (verti + 2) * 3, points[2].data, sizef3);
+      memcpy(normals + (verti + 0) * 3, face.normal.data, sizef3);
+      memcpy(normals + (verti + 1) * 3, face.normal.data, sizef3);
+      memcpy(normals + (verti + 2) * 3, face.normal.data, sizef3);
+      memcpy(uvs + (verti + 0) * 3, face.uv[0].data, sizef3);
+      memcpy(uvs + (verti + 1) * 3, face.uv[1].data, sizef3);
+      memcpy(uvs + (verti + 2) * 3, face.uv[2].data, sizef3);
+
+      indices[indexi + 0] = verti + 0;
+      indices[indexi + 1] = verti + 1;
+      indices[indexi + 2] = verti + 2;
+
+      indexi += 3;
+      verti += 3;
+    }
+  }
 }
 
 static
@@ -174,7 +308,7 @@ void
 extract_materials(
   const texture_map_t &texture_map,
   const std::string &target_dir,
-  const std::string &map_name)
+  const std::string &wad_file)
 {
   bulk_material_asset_t asset = {};
 
@@ -193,7 +327,7 @@ extract_materials(
   std::string type_dir = bulk_material_asset_get_dir();
   std::string target_bin = target_dir + "\\" + type_dir;
   ensure_directory(target_bin);
-  std::string target_file = target_bin + "\\" + map_name + ".bin";
+  std::string target_file = target_bin + "\\" + wad_file + ".bin";
   write_to_file(stream, target_file);
 
   binary_stream_cleanup(&stream);
