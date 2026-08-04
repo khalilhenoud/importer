@@ -141,6 +141,17 @@ ensure_clean_directory(const std::string &directory)
 
 inline
 void
+ensure_directory(const std::string &directory)
+{
+  if (std::filesystem::exists(directory))
+    return;
+
+  bool success = std::filesystem::create_directory(directory);
+  assert(success && "failed to create the directory");
+}
+
+inline
+void
 write_to_file(const binary_stream_t &stream, const std::string &target)
 {
   file_open_flags_t flags =
@@ -155,13 +166,25 @@ write_to_file(const binary_stream_t &stream, const std::string &target)
 
 inline
 void
-ensure_directory(const std::string &directory)
+write_to_file(
+  const std::string &target_dir,
+  void *asset,
+  fn_serialize_t serialize,
+  fn_get_dir_t get_dir,
+  const std::string &name,
+  const std::string &extension)
 {
-  if (std::filesystem::exists(directory))
-    return;
+  binary_stream_t stream;
+  binary_stream_def(&stream);
+  binary_stream_setup(&stream, &g_default_allocator);
+  serialize(&asset, &stream);
 
-  bool success = std::filesystem::create_directory(directory);
-  assert(success && "failed to create the directory");
+  std::string target_bin = target_dir + "\\" + get_dir();
+  ensure_directory(target_bin);
+  std::string target_file = target_bin + "\\" + name + "." + extension;
+  write_to_file(stream, target_file);
+
+  binary_stream_cleanup(&stream);
 }
 
 inline

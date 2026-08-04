@@ -28,6 +28,8 @@
 #include <material/indexed_material_asset.h>
 #include <material/material_asset.h>
 #include <mesh/mesh_asset.h>
+#include <props/light.h>
+#include <spatial/bvh/bvh.h>
 #include <texture/texture_asset.h>
 
 
@@ -68,9 +70,26 @@ extract_materials(
 static
 void
 extract_meshes(
+  bulk_mesh_asset_t &asset,
   const texture_map_t &texture_map,
+  const std::string &target_dir,
   const topological_faces_t &topological_faces,
-  const texture_face_map_t &tface_map);
+  const texture_face_map_t &tface_map,
+  const std::string &wad_name);
+
+static
+void
+extract_lights(
+  cvector_t &lights,
+  loader_map_data_t &map,
+  const matrix4f &transform);
+
+static
+void
+build_bvh(
+  bvh_t &bvh,
+  bulk_mesh_asset_t &meshes,
+  const matrix4f &transform);
 
 void
 import_map(
@@ -78,28 +97,188 @@ import_map(
   const std::string &target_dir)
 {
   loader_map_data_t *map = load_map(source_file.c_str(), &g_default_allocator);
-  std::string simple_wad_name = get_simple_name(map->world.wad);
+  std::string wad_name = get_simple_name(map->world.wad);
+  std::string map_name = get_simple_name(source_file);
+
+  sublevel_asset_t sublevel = {};
+  cstring_setup2(sublevel.name, map_name.c_str());
+  // set the default transform
+  matrix4f_rotation_x(&sublevel.transform, -K_PI/2.f);
+
+  // copy the meta data
+  sublevel.metadata.player_start.data[0] = (float)map->player_start[0];
+  sublevel.metadata.player_start.data[1] = (float)map->player_start[1];
+  sublevel.metadata.player_start.data[2] = (float)map->player_start[2];
+  sublevel.metadata.player_angle = (float)map->player_angle;
 
   // extract textures
   texture_map_t texture_map;
   extract_textures(source_file, target_dir, texture_map, map->world.wad);
-  extract_materials(texture_map, target_dir, simple_wad_name);
+  extract_materials(texture_map, target_dir, wad_name);
 
   topological_faces_t topological_faces;
   texture_face_map_t tface_map;
   extract_faces(map, texture_map, topological_faces, tface_map);
 
-  // extract bulk meshes, where each mesh references an indexed_material_asset_t
-  extract_meshes(texture_map, topological_faces, tface_map);
+  // each mesh references an indexed_material_asset_t that is exported
+  extract_meshes(
+    sublevel.meshes,
+    texture_map, target_dir, topological_faces, tface_map, wad_name);
+
+  extract_lights(sublevel.lights, *map, sublevel.transform);
+
+  build_bvh(sublevel.bvh, sublevel.meshes, sublevel.transform);
 
   free_map(map, &g_default_allocator);
 
-  return 1;
+  write_to_file(
+    target_dir,
+    &sublevel,
+    sublevel_asset_serialize, sublevel_asset_get_dir,
+    map_name, "bin");
+
+  sublevel_asset_cleanup(&sublevel, &g_default_allocator);
+}
+
+static
+void
+build_bvh_transformed_vertices(
+  const mesh_asset_t &mesh,
+  const uint32_t index,
+  const matrix4f &transform,
+  float **vertices,
+  uint32_t **indices,
+  uint32_t *indices_count)
+{
+  // transform the original vertices by the sublevel transform
+  float *points = (float*)g_default_allocator.mem_cont_alloc(
+    mesh.vertices.size, sizeof(float));
+  memcpy(points, mesh.vertices.data, mesh.vertices.size * sizeof(float));
+
+  for (uint32_t i = 0, count = (mesh.vertices.size / 3); i < count; ++i) {
+    point3f pt = { points[i * 3 + 0], points[i * 3 + 1], points[i * 3 + 2] };
+    mult_set_m4f_p3f(&transform, &pt);
+    memcpy(&points[i * 3 + 0], pt.data, sizeof(pt.data));
+  }
+
+  vertices[index] = points;
+  indices[index] = (uint32_t *)mesh.indices.data;
+  indices_count[index] = mesh.indices.size;
+}
+
+static
+void
+build_bvh(
+  bvh_t &level_bvh,
+  bulk_mesh_asset_t &bulk_mesh,
+  const matrix4f &transform)
+{
+  if (!bulk_mesh.meshes.size)
+    return;
+
+  bvh_t *bvh = NULL;
+  float **vertices = NULL;
+  uint32_t **indices = NULL;
+  uint32_t *index_count = NULL;
+  uint32_t mesh_count = bulk_mesh.meshes.size;
+
+  vertices = (float **)g_default_allocator.mem_alloc(
+    sizeof(float *) * mesh_count);
+  indices = (uint32_t **)g_default_allocator.mem_alloc(
+    sizeof(uint32_t *) * mesh_count);
+  indices_count = (uint32_t *)g_default_allocator.mem_alloc(
+    sizeof(uint32_t) * mesh_count);
+  assert(vertices && indices && indices_count);
+
+  for (uint32_t i = 0; i < bulk_mesh.meshes.size; ++i) {
+    mesh_asset_t *mesh = cvector_as(&bulk_mesh.meshes, i, mesh_asset_t);
+    build_bvh_transformed_vertices(
+      *mesh, i, transform, vertices, indices, indices_count);
+  }
+
+  bvh = bvh_create(
+    vertices,
+    indices,
+    indices_count,
+    mesh_count,
+    &g_default_allocator,
+    BVH_CONSTRUCT_NAIVE);
+
+  for (uint32_t i = 0; i < mesh_count; ++i)
+    allocator->mem_free(vertices[i]);
+  allocator->mem_free(vertices);
+  allocator->mem_free(indices);
+  allocator->mem_free(indices_count);
+
+  cvector_fullswap(&bvh->normals, &level_bvh.normals);
+  cvector_fullswap(&bvh->faces, &level_bvh.faces);
+  cvector_fullswap(&bvh->bounds, &level_bvh.bounds);
+  cvector_fullswap(&bvh->nodes, &level_bvh.nodes);
+  g_default_allocator.mem_free(bvh);
+}
+
+static
+void
+setup_light(
+  light_t &light,
+  loader_map_light_data_t &source,
+  const matrix4f &transform)
+{
+  // set the position
+  light.position.data[0] = (float)source.origin[0];
+  light.position.data[1] = (float)source.origin[1];
+  light.position.data[2] = (float)source.origin[2];
+  mult_set_m4f_p3f(
+    &transform,
+    &light.position);
+
+  light.type = LIGHT_TYPE_POINT;
+  light.attenuation_constant = 1.f;
+  light.attenuation_linear = 0.01f;
+  light.attenuation_quadratic = 0.f;
+  light.ambient.data[0] =
+  light.ambient.data[1] =
+  light.ambient.data[2] = 0.2f;
+  light.ambient.data[3] = 1.f;
+  light.diffuse.data[0] =
+  light.diffuse.data[1] =
+  light.diffuse.data[2] = (float)(source.light)/255.f;
+  light.diffuse.data[3] = 1.f;
+  light.specular.data[0] =
+  light.specular.data[1] =
+  light.specular.data[2] = 0.f;
+  light.specular.data[3] = 1.f;
+}
+
+static
+void
+extract_lights(
+  cvector_t &lights,
+  loader_map_data_t &map,
+  const matrix4f &transform)
+{
+  cvector_setup(&lights,
+    get_type_data(light_t),
+    map.lights.count,
+    &g_default_allocator);
+  cvector_resize(&lights, map.lights.count);
+
+  std::string light_name;
+  for (uint32_t i = 0; i < lights.size; ++i) {
+    light_t *light = cvector_as(&lights, i, light_t);
+    light_def(light);
+    light_name = "light_" + i;
+    cstring_setup2(&light->name, light_name.c_str());
+    setup_light(light, map.lights.lights[i], transform);
+  }
 }
 
 static
 void
 setup_mesh(
+  const std::string &target_dir,
+  const std::string &wad_file,
+  const uint32_t index,
   const std::pair<const sanitized_path_t, texture_entry_t> &entry,
   const topological_faces_t &topological_faces,
   const texture_face_map_t &tface_map,
@@ -146,78 +325,55 @@ setup_mesh(
     verti += 3;
   }
 
-  // 2- serialize an indexed_material_asset.h
-  // 3- set the mesh material to point to the indexed_material_asset.h
+  // serialize an indexed_material_asset_t, the name would be "suffixed".
+  indexed_material_asset_t imaterial;
+  imaterial.bulk_material_ref.type_id = get_type_id(bulk_material_asset_t);
+  imaterial.bulk_material_ref.path = wad_file;
+  imaterial.index = index;
+
+  write_to_file(
+    target_dir,
+    &imaterial,
+    indexed_material_asset_serialize,
+    indexed_material_asset_get_dir,
+    wad_file, "idxbin");
+
+  // set the mesh material to point to the indexed_material_asset_t
+  cvector_setup2(&mesh.materials, get_type_data(asset_ref_t));
+  asset_ref_t indexed_material = {};
+  indexed_material.type_id = get_type_id(indexed_material_asset_t);
+  indexed_material.path = wad_file;
+  cvector_push_back(&mesh.materials, indexed_material, asset_ref_t);
 }
 
+static
 void
 extract_meshes(
+  bulk_mesh_asset_t &asset,
   const texture_map_t &texture_map,
+  const std::string &target_dir,
   const topological_faces_t &topological_faces,
-  const texture_face_map_t &tface_map)
+  const texture_face_map_t &tface_map,
+  const std::string &wad_name)
 {
-  bulk_mesh_asset_t asset = {};
   cvector_setup(
     &asset.meshes,
     get_type_data(mesh_asset_t),
     texture_map.size(),
-    g_default_allocator);
+    &g_default_allocator);
 
+  uint32_t index = 0;
   for (const auto &entry : texture_map) {
     mesh_asset_t mesh = {};
-    setup_mesh(entry, topological_faces, tface_map, mesh);
-    cvector_push_back(&asset.meshes, mesh, mesh_asset_t)
-  }
+    setup_mesh(
+      target_dir, wad_name, index++,
+      entry, topological_faces, tface_map, mesh);
 
-  for (auto& entry : tex_map) {
-    uint32_t i = entry.second.index;
-    mesh_t *mesh = cvector_as(&scene->mesh_repo, i, mesh_t);
-    mesh_def(mesh);
-
-    // get the faces that share this index texture-material.
-    auto& face_indices = entry.second.indices;
-    uint32_t face_count = face_indices.size();
-    uint32_t vertices_count = face_count * 3;
-    uint32_t sizef3 = sizeof(float) * 3;
-
-    cvector_setup(&mesh->vertices, get_type_data(float), 0, allocator);
-    cvector_resize(&mesh->vertices, vertices_count * 3);
-    cvector_setup(&mesh->normals, get_type_data(float), 0, allocator);
-    cvector_resize(&mesh->normals, vertices_count * 3);
-    cvector_setup(&mesh->uvs, get_type_data(float), 0, allocator);
-    cvector_resize(&mesh->uvs, vertices_count * 3);
-    memset(mesh->uvs.data, 0, sizeof(float) * vertices_count * 3);
-    cvector_setup(&mesh->indices, get_type_data(uint32_t), 0, allocator);
-    cvector_resize(&mesh->indices, vertices_count);
-    mesh->materials.used = 1;
-    mesh->materials.indices[0] = i;
-
-    // copy the data into the mesh.
-    uint32_t verti = 0, indexi = 0;
-    float *vertices = (float *)mesh->vertices.data;
-    float *normals = (float *)mesh->normals.data;
-    float *uvs = (float *)mesh->uvs.data;
-    uint32_t *indices = (uint32_t *)mesh->indices.data;
-    for (uint32_t k = 0; k < face_count; ++k) {
-      auto& face = map_faces[face_indices[k]];
-      point3f* points = face.face.points;
-      memcpy(vertices + (verti + 0) * 3, points[0].data, sizef3);
-      memcpy(vertices + (verti + 1) * 3, points[1].data, sizef3);
-      memcpy(vertices + (verti + 2) * 3, points[2].data, sizef3);
-      memcpy(normals + (verti + 0) * 3, face.normal.data, sizef3);
-      memcpy(normals + (verti + 1) * 3, face.normal.data, sizef3);
-      memcpy(normals + (verti + 2) * 3, face.normal.data, sizef3);
-      memcpy(uvs + (verti + 0) * 3, face.uv[0].data, sizef3);
-      memcpy(uvs + (verti + 1) * 3, face.uv[1].data, sizef3);
-      memcpy(uvs + (verti + 2) * 3, face.uv[2].data, sizef3);
-
-      indices[indexi + 0] = verti + 0;
-      indices[indexi + 1] = verti + 1;
-      indices[indexi + 2] = verti + 2;
-
-      indexi += 3;
-      verti += 3;
-    }
+    // TODO(@khalil): check if this continue happening.
+    if (mesh.indices.size)
+      cvector_push_back(&asset.meshes, mesh, mesh_asset_t);
+    else
+      mesh_asset_cleanup(&mesh, &g_default_allocator);
   }
 }
 
@@ -304,6 +460,7 @@ setup_material_asset(
   cvector_push_back(&material.textures, texture, texture_properties_t);
 }
 
+static
 void
 extract_materials(
   const texture_map_t &texture_map,
@@ -316,7 +473,7 @@ extract_materials(
   for (const auto &entry : texture_map) {
     material_asset_t material;
     setup_material_asset(material, target_dir, entry.second.path);
-    cvector_push_back(&asset, &material, material_asset_t);
+    cvector_push_back(&asset, material, material_asset_t);
   }
 
   binary_stream_t stream;
