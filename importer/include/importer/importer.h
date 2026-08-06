@@ -14,8 +14,7 @@
 #include <string>
 
 
-// returns non-zero on success, otherwise 0.
-uint32_t
+void
 import(
     const std::string &source_file,
     const std::string &target_dir);

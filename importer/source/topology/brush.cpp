@@ -8,9 +8,9 @@
  * @copyright Copyright (c) 2025
  *
  */
-#include <importer/string_utils.h>
 #include <importer/topology/brush.h>
 #include <importer/topology/edge.h>
+#include <importer/utils.h>
 #include <loaders/loader_map.h>
 #include <math/vector3f.h>
 #include <math/matrix4f.h>
@@ -84,7 +84,7 @@ brush_t::brush_t(
         { brush->faces[i].scale[0], brush->faces[i].scale[1] }
       };
 
-    std::string texture = string_utils::get_sanitized(brush->faces[i].texture);
+    std::string texture = get_sanitized(brush->faces[i].texture);
 
     // read the texture width/height
     texture_info_t texture_info;

@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <filesystem>
 #include <vector>
@@ -115,7 +116,7 @@ inline
 std::string
 get_simple_name(const std::string &path)
 {
-  std::string simple_name = path.substr(path.find_last_of("\\") + 1);
+  std::string simple_name = path.substr(path.find_last_of("/\\") + 1);
   return simple_name.substr(0, simple_name.find_last_of("."));
 }
 
@@ -189,19 +190,38 @@ write_to_file(
 
 inline
 std::string
-get_simple_name(const std::string &path)
-{
-  std::string file_name = path.substr(path.find_last_of("/\\") + 1);
-  std::string extension = file_name.substr(file_name.find_last_of("."));
-  return file_name.substr(0, file_name.length() - extension.length());
-}
-
-inline
-std::string
 get_extension(const std::string &path)
 {
   std::string file_name = path.substr(path.find_last_of("/\\") + 1);
   return file_name.substr(file_name.find_last_of(".") + 1);
+}
+
+inline
+bool
+replace(
+  std::string& str,
+  const std::string& from,
+  const std::string& to)
+{
+  size_t start_pos = str.find(from);
+  if (start_pos == std::string::npos)
+    return false;
+  str.replace(start_pos, from.length(), to);
+  return true;
+}
+
+// NOTE: qpakman replaces some wad file tokens with an OS safe replacement.
+inline
+std::string
+get_sanitized(std::string str)
+{
+  std::transform(str.begin(), str.end(), str.begin(),
+    [](unsigned char c) { return std::tolower(c); });
+  replace(str, "*", "star_");
+  replace(str, "+", "plus_");
+  replace(str, "-", "minu_");
+  replace(str, "/", "divd_");
+  return str;
 }
 
 // inline

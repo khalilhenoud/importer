@@ -24,7 +24,7 @@ import(
 
   std::string extension = get_extension(source_file);
   if (extension == "png")
-    return import_texture(source_file, target_dir);
+    import_texture(source_file, target_dir);
   else if (extension == "map")
-    return import_map(source_file, target_dir);
+    import_map(source_file, target_dir);
 }

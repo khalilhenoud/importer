@@ -101,7 +101,7 @@ import_map(
   std::string map_name = get_simple_name(source_file);
 
   sublevel_asset_t sublevel = {};
-  cstring_setup2(sublevel.name, map_name.c_str());
+  cstring_setup2(&sublevel.name, map_name.c_str());
   // set the default transform
   matrix4f_rotation_x(&sublevel.transform, -K_PI/2.f);
 
@@ -179,7 +179,7 @@ build_bvh(
   bvh_t *bvh = NULL;
   float **vertices = NULL;
   uint32_t **indices = NULL;
-  uint32_t *index_count = NULL;
+  uint32_t *indices_count = NULL;
   uint32_t mesh_count = bulk_mesh.meshes.size;
 
   vertices = (float **)g_default_allocator.mem_alloc(
@@ -205,10 +205,10 @@ build_bvh(
     BVH_CONSTRUCT_NAIVE);
 
   for (uint32_t i = 0; i < mesh_count; ++i)
-    allocator->mem_free(vertices[i]);
-  allocator->mem_free(vertices);
-  allocator->mem_free(indices);
-  allocator->mem_free(indices_count);
+    g_default_allocator.mem_free(vertices[i]);
+  g_default_allocator.mem_free(vertices);
+  g_default_allocator.mem_free(indices);
+  g_default_allocator.mem_free(indices_count);
 
   cvector_fullswap(&bvh->normals, &level_bvh.normals);
   cvector_fullswap(&bvh->faces, &level_bvh.faces);
@@ -269,7 +269,7 @@ extract_lights(
     light_def(light);
     light_name = "light_" + i;
     cstring_setup2(&light->name, light_name.c_str());
-    setup_light(light, map.lights.lights[i], transform);
+    setup_light(*light, map.lights.lights[i], transform);
   }
 }
 
@@ -279,22 +279,23 @@ setup_mesh(
   const std::string &target_dir,
   const std::string &wad_file,
   const uint32_t index,
-  const std::pair<const sanitized_path_t, texture_entry_t> &entry,
+  const sanitized_path_t sanitized,
   const topological_faces_t &topological_faces,
   const texture_face_map_t &tface_map,
   mesh_asset_t &mesh)
 {
-  auto &face_indices = tface_map[entry.first];
+  const face_ids_t &face_indices = tface_map.at(sanitized);
   uint32_t face_count = face_indices.size();
   uint32_t vertices_count = face_count * 3;
-  cvector_setup(&mesh.vertices, get_type_data(float), 0, allocator);
+  cvector_setup(&mesh.vertices, get_type_data(float), 0, &g_default_allocator);
   cvector_resize(&mesh.vertices, vertices_count * 3);
-  cvector_setup(&mesh.normals, get_type_data(float), 0, allocator);
+  cvector_setup(&mesh.normals, get_type_data(float), 0, &g_default_allocator);
   cvector_resize(&mesh.normals, vertices_count * 3);
-  cvector_setup(&mesh.uvs, get_type_data(float), 0, allocator);
+  cvector_setup(&mesh.uvs, get_type_data(float), 0, &g_default_allocator);
   cvector_resize(&mesh.uvs, vertices_count * 3);
   memset(mesh.uvs.data, 0, sizeof(float) * vertices_count * 3);
-  cvector_setup(&mesh.indices, get_type_data(uint32_t), 0, allocator);
+  cvector_setup(
+    &mesh.indices, get_type_data(uint32_t), 0, &g_default_allocator);
   cvector_resize(&mesh.indices, vertices_count);
 
   // set the mesh specific data: vertices, uvs, indices, etc...
@@ -306,7 +307,7 @@ setup_mesh(
   uint32_t *indices = (uint32_t *)mesh.indices.data;
   for (uint32_t k = 0; k < face_count; ++k) {
     auto& face = topological_faces[face_indices[k]];
-    point3f *points = face.face.points;
+    const point3f *points = face.face.points;
     memcpy(vertices + (verti + 0) * 3, points[0].data, sizef3);
     memcpy(vertices + (verti + 1) * 3, points[1].data, sizef3);
     memcpy(vertices + (verti + 2) * 3, points[2].data, sizef3);
@@ -328,7 +329,7 @@ setup_mesh(
   // serialize an indexed_material_asset_t, the name would be "suffixed".
   indexed_material_asset_t imaterial;
   imaterial.bulk_material_ref.type_id = get_type_id(bulk_material_asset_t);
-  imaterial.bulk_material_ref.path = wad_file;
+  cstring_setup2(&imaterial.bulk_material_ref.path, wad_file.c_str());
   imaterial.index = index;
 
   write_to_file(
@@ -342,7 +343,7 @@ setup_mesh(
   cvector_setup2(&mesh.materials, get_type_data(asset_ref_t));
   asset_ref_t indexed_material = {};
   indexed_material.type_id = get_type_id(indexed_material_asset_t);
-  indexed_material.path = wad_file;
+  cstring_setup2(&indexed_material.path, wad_file.c_str());
   cvector_push_back(&mesh.materials, indexed_material, asset_ref_t);
 }
 
@@ -367,7 +368,7 @@ extract_meshes(
     mesh_asset_t mesh = {};
     setup_mesh(
       target_dir, wad_name, index++,
-      entry, topological_faces, tface_map, mesh);
+      entry.first, topological_faces, tface_map, mesh);
 
     // TODO(@khalil): check if this continue happening.
     if (mesh.indices.size)
@@ -420,7 +421,7 @@ extract_textures(
   for (const auto &file : extracted_files) {
     std::string path = get_simple_name(file.u8string());
     auto sanitized = path;
-    string_utils::replace(sanitized, "_fbr", "");
+    replace(sanitized, "_fbr", "");
     texture_info_t info = import_texture(file.u8string().c_str(), target_dir);
     texture_map[sanitized] = { path, info };
   }
@@ -473,7 +474,7 @@ extract_materials(
   for (const auto &entry : texture_map) {
     material_asset_t material;
     setup_material_asset(material, target_dir, entry.second.path);
-    cvector_push_back(&asset, material, material_asset_t);
+    cvector_push_back(&asset.materials, material, material_asset_t);
   }
 
   binary_stream_t stream;
@@ -506,8 +507,8 @@ extract_faces(
       entry.second.info.width, entry.second.info.height };
 
   std::vector<topology::poly_brush_t> poly_brushes;
-  for (uint32_t i = 0; i < map_data->world.brush_count; ++i) {
-    const topology::brush_t brush(map_data->world.brushes + i, textures_info);
+  for (uint32_t i = 0; i < map->world.brush_count; ++i) {
+    const topology::brush_t brush(map->world.brushes + i, textures_info);
     poly_brushes.emplace_back(&brush);
   }
 
