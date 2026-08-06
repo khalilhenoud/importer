@@ -178,7 +178,7 @@ write_to_file(
   binary_stream_t stream;
   binary_stream_def(&stream);
   binary_stream_setup(&stream, &g_default_allocator);
-  serialize(&asset, &stream);
+  serialize(asset, &stream);
 
   std::string target_bin = target_dir + "\\" + get_dir();
   ensure_directory(target_bin);

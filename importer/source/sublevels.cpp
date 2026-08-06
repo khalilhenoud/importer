@@ -267,7 +267,7 @@ extract_lights(
   for (uint32_t i = 0; i < lights.size; ++i) {
     light_t *light = cvector_as(&lights, i, light_t);
     light_def(light);
-    light_name = "light_" + i;
+    light_name = "light_" + std::to_string(i);
     cstring_setup2(&light->name, light_name.c_str());
     setup_light(*light, map.lights.lights[i], transform);
   }
@@ -326,7 +326,8 @@ setup_mesh(
     verti += 3;
   }
 
-  // serialize an indexed_material_asset_t, the name would be "suffixed".
+  // serialize an indexed_material_asset_t, the name would be "suffixed?".
+  std::string indexed_name = wad_file + "_" + std::to_string(index);
   indexed_material_asset_t imaterial;
   imaterial.bulk_material_ref.type_id = get_type_id(bulk_material_asset_t);
   cstring_setup2(&imaterial.bulk_material_ref.path, wad_file.c_str());
@@ -337,13 +338,13 @@ setup_mesh(
     &imaterial,
     indexed_material_asset_serialize,
     indexed_material_asset_get_dir,
-    wad_file, "idxbin");
+    indexed_name, "bin");
 
   // set the mesh material to point to the indexed_material_asset_t
-  cvector_setup2(&mesh.materials, get_type_data(asset_ref_t));
+  cvector_setup2(&mesh.materials, asset_ref_t);
   asset_ref_t indexed_material = {};
   indexed_material.type_id = get_type_id(indexed_material_asset_t);
-  cstring_setup2(&indexed_material.path, wad_file.c_str());
+  cstring_setup2(&indexed_material.path, indexed_name.c_str());
   cvector_push_back(&mesh.materials, indexed_material, asset_ref_t);
 }
 
@@ -365,6 +366,11 @@ extract_meshes(
 
   uint32_t index = 0;
   for (const auto &entry : texture_map) {
+    if (tface_map.find(entry.first) == tface_map.cend()) {
+      ++index;
+      continue;
+    }
+
     mesh_asset_t mesh = {};
     setup_mesh(
       target_dir, wad_name, index++,
@@ -374,7 +380,7 @@ extract_meshes(
     if (mesh.indices.size)
       cvector_push_back(&asset.meshes, mesh, mesh_asset_t);
     else
-      mesh_asset_cleanup(&mesh, &g_default_allocator);
+      assert(false);
   }
 }
 
@@ -454,7 +460,7 @@ setup_material_asset(
   set_mat_rgb(material.diffuse, 0.5f, 0.5f, 0.5f);
   set_mat_rgb(material.specular, 0.5f, 0.5f, 0.5f);
 
-  cvector_setup2(&material.textures, get_type_data(texture_properties_t));
+  cvector_setup2(&material.textures, texture_properties_t);
   texture_properties_t texture = {};
   texture.texture_ref.type_id = get_type_id(texture_asset_t);
   cstring_setup2(&texture.texture_ref.path, name.c_str());
@@ -470,7 +476,7 @@ extract_materials(
 {
   bulk_material_asset_t asset = {};
 
-  cvector_setup2(&asset.materials, get_type_data(material_asset_t));
+  cvector_setup2(&asset.materials, material_asset_t);
   for (const auto &entry : texture_map) {
     material_asset_t material;
     setup_material_asset(material, target_dir, entry.second.path);
