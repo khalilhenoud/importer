@@ -402,20 +402,18 @@ extract_textures(
   std::replace(wad_file_relative.begin(), wad_file_relative.end(), '/', '\\');
   extraction_dir += wad_file_relative;
 
+  std::string wad_file = extraction_dir + ".wad";
+  auto wad_canonical = std::filesystem::canonical(wad_file).string();
+
   auto current_working_dir = std::filesystem::current_path();
   ensure_clean_directory(extraction_dir);
   std::filesystem::current_path(extraction_dir);
 
-  {
-    std::string wad_file = extraction_dir + ".wad";
-    auto wad_canonical = std::filesystem::canonical(wad_file).string();
-
-    // extract the wad into the directory
-    std::string buffer = tools_folder;
-    buffer += "qpakman -extract ";
-    buffer += wad_canonical;
-    system(buffer.c_str());
-  }
+  // extract the wad into the directory
+  std::string buffer = tools_folder;
+  buffer += "qpakman -extract ";
+  buffer += wad_canonical;
+  system(buffer.c_str());
 
   // restore working directory
   std::filesystem::current_path(current_working_dir);
