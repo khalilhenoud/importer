@@ -330,7 +330,9 @@ setup_mesh(
   std::string indexed_name = wad_file + "_" + std::to_string(index);
   indexed_material_asset_t imaterial;
   imaterial.bulk_material_ref.type_id = get_type_id(bulk_material_asset_t);
-  cstring_setup2(&imaterial.bulk_material_ref.path, wad_file.c_str());
+  std::string path = construct_asset_path(
+    target_dir, bulk_material_asset_get_dir, wad_file);
+  cstring_setup2(&imaterial.bulk_material_ref.path, path.c_str());
   imaterial.index = index;
 
   write_to_file(
@@ -340,12 +342,16 @@ setup_mesh(
     indexed_material_asset_get_dir,
     indexed_name, "bin");
 
-  // set the mesh material to point to the indexed_material_asset_t
-  cvector_setup2(&mesh.materials, asset_ref_t);
-  asset_ref_t indexed_material = {};
-  indexed_material.type_id = get_type_id(indexed_material_asset_t);
-  cstring_setup2(&indexed_material.path, indexed_name.c_str());
-  cvector_push_back(&mesh.materials, indexed_material, asset_ref_t);
+  {
+    // set the mesh material to point to the indexed_material_asset_t
+    cvector_setup2(&mesh.materials, asset_ref_t);
+    asset_ref_t indexed_material = {};
+    indexed_material.type_id = get_type_id(indexed_material_asset_t);
+    std::string path = construct_asset_path(
+      target_dir, indexed_material_asset_get_dir, indexed_name);
+    cstring_setup2(&indexed_material.path, path.c_str());
+    cvector_push_back(&mesh.materials, indexed_material, asset_ref_t);
+  }
 }
 
 static
@@ -461,7 +467,9 @@ setup_material_asset(
   cvector_setup2(&material.textures, texture_properties_t);
   texture_properties_t texture = {};
   texture.texture_ref.type_id = get_type_id(texture_asset_t);
-  cstring_setup2(&texture.texture_ref.path, name.c_str());
+  std::string path = construct_asset_path(
+    target_dir, texture_asset_get_dir, name);
+  cstring_setup2(&texture.texture_ref.path, path.c_str());
   cvector_push_back(&material.textures, texture, texture_properties_t);
 }
 

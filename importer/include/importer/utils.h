@@ -190,6 +190,28 @@ write_to_file(
 
 inline
 std::string
+construct_asset_path(
+  const std::string &target_dir,
+  fn_get_dir_t get_dir,
+  const std::string &name,
+  const std::string &extension)
+{
+  return target_dir + "\\" + get_dir() + "\\" + name + "." + extension;
+}
+
+inline
+std::string
+construct_asset_path(
+  const std::string &target_dir,
+  fn_get_dir_t get_dir,
+  const std::string &name)
+{
+  return construct_asset_path(target_dir, get_dir, name, "bin");
+}
+
+
+inline
+std::string
 get_extension(const std::string &path)
 {
   std::string file_name = path.substr(path.find_last_of("/\\") + 1);
