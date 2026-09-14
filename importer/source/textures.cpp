@@ -33,6 +33,7 @@ import_texture(
       get_type_data(uint8_t),
       data->total_buffer_size,
       &g_default_allocator);
+  cvector_resize(&asset.buffer, data->total_buffer_size);
   memcpy(asset.buffer.data, data->buffer, data->total_buffer_size);
   asset.format = (texture_format_t)data->format;
   asset.width = data->width;
