@@ -111,6 +111,8 @@ import_map(
   sublevel.metadata.player_start.data[2] = (float)map->player_start[2];
   sublevel.metadata.player_angle = (float)map->player_angle;
 
+  mult_set_m4f_p3f(&sublevel.transform, &sublevel.metadata.player_start);
+
   // extract textures
   texture_map_t texture_map;
   extract_textures(source_file, target_dir, texture_map, map->world.wad);
