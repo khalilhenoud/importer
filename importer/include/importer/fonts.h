@@ -1,26 +1,20 @@
 /**
- * @file importer.h
+ * @file fonts.h
  * @author khalilhenoud@gmail.com
  * @brief
  * @version 0.1
- * @date 2026-07-09
+ * @date 2026-09-23
  *
  * @copyright Copyright (c) 2026
  *
  */
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 
 void
-import(
-  const std::string &source_file,
-  const std::string &target_dir);
-
-void
-import(
+import_font(
   const std::string &source_file1,
   const std::string &source_file2,
   const std::string &target_dir);

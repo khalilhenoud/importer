@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_executable(${PROJECT_NAME}
+        ./source/fonts.cpp
         ./source/importer.cpp
 				./source/main.cpp
         ./source/sublevels.cpp
