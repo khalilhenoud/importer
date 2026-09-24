@@ -45,5 +45,6 @@ import(
   std::string extension2 = get_extension(source_file2);
   if (extension1 == "csv" && extension2 == "png")
     import_font(source_file1, source_file2, target_dir);
-  assert(false);
+  else
+    assert(false);
 }

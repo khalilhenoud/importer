@@ -39,6 +39,11 @@ copy_font_data(const loader_csv_font_data_t *source, font_asset_t *target)
       target->bounds[i],
       source->bounds[i].data,
       sizeof(source->bounds[i].data));
+
+    target->glyphs[i].width = source->glyphs[i].width;
+    target->glyphs[i].width_offset = source->glyphs[i].offset;
+    target->glyphs[i].x = source->glyphs[i].x;
+    target->glyphs[i].y = source->glyphs[i].y;
   }
 }
 
@@ -53,4 +58,23 @@ import_font(
 
   font_asset_t font = {};
   copy_font_data(font_csv, &font);
+
+  (void)import_texture(source_file2, target_dir);
+  font.texture_ref.type_id = get_type_id(texture_asset_t);
+
+  std::string name = get_simple_name(source_file2);
+  std::string path = construct_asset_path(
+    target_dir, texture_asset_get_dir, name);
+  cstring_setup2(&font.texture_ref.path, path.c_str());
+
+  free_csv(font_csv, &g_default_allocator);
+
+  write_to_file(
+    target_dir,
+    &font,
+    font_asset_serialize, font_asset_get_dir,
+    get_simple_name(source_file1),
+    "bin");
+
+  font_asset_cleanup(&font, &g_default_allocator);
 }

@@ -1,0 +1,1 @@
+build\Debug\importer "F:\data\font\Malgun Gothic.csv" "F:\data\font\Malgun Gothic.png" F:\data\level1
