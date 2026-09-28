@@ -10,10 +10,10 @@
  */
 #include <cassert>
 #include <cstdint>
-#include <font/font_asset.h>
 #include <importer/fonts.h>
 #include <importer/textures.h>
 #include <importer/utils.h>
+#include <font/font_asset.h>
 #include <library/allocator/allocator.h>
 #include <library/streams/binary_stream.h>
 #include <library/string/cstring.h>
