@@ -1,0 +1,1 @@
+build\Debug\importer "F:\data\raws\map_textured2.blend" F:\data\shared

@@ -17,5 +17,4 @@
 void
 import_meshes(
   const std::string &source_file,
-  const std::string &target_dir,
-  bool_t all = true);
+  const std::string &target_dir);

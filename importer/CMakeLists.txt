@@ -21,7 +21,7 @@ add_executable(${PROJECT_NAME}
         ./source/topology/brush.cpp
         ./source/topology/poly_brush.cpp
         ./source/topology/polygon.cpp
-        ./source/topology/meshes.cpp
+        ./source/meshes.cpp
         # ./source/parsers/quake/string_utils.cpp
         # ./source/parsers/quake/bvh_utils.cpp
         # ./source/parsers/quake/loader.cpp

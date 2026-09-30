@@ -15,13 +15,14 @@
 #include <filesystem>
 #include <vector>
 #include <string>
-// #include <assimp/types.h>
-// #include <assimp/material.h>
+#include <assimp/types.h>
+#include <assimp/material.h>
 #include <library/containers/cvector.h>
 #include <library/filesystem/io.h>
 #include <library/streams/binary_stream.h>
-// #include <math/quatf.h>
-// #include <math/vector3f.h>
+#include <material/material_asset.h>
+#include <math/quatf.h>
+#include <math/vector3f.h>
 // #include <entity/mesh/material.h>
 // #include <props/color.h>
 

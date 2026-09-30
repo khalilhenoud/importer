@@ -29,6 +29,7 @@
 #include <texture/texture_asset.h>
 
 
+inline
 uint32_t
 count_material_textures(const aiMaterial *pMaterial)
 {
@@ -54,10 +55,12 @@ count_material_textures(const aiMaterial *pMaterial)
   return total;
 }
 
+static
 void
 extract_material(
   const aiMaterial *pMaterial,
-  const std::string &target_dir)
+  const std::string &target_dir,
+  std::string &file_name)
 {
   material_asset_t material = {};
 
@@ -80,7 +83,7 @@ extract_material(
   aiString data_str;
   value = aiGetMaterialString(pMaterial, AI_MATKEY_NAME, &data_str);
   assert(value == AI_SUCCESS);
-  cstring_setup(&material.name, data_str.C_Str(), allocator);
+  cstring_setup2(&material.name, data_str.C_Str());
 
   uint32_t textures_count = count_material_textures(pMaterial);
   cvector_setup2(&material.textures, texture_properties_t);
@@ -110,7 +113,7 @@ extract_material(
         std::string name = get_simple_name(path.C_Str());
         std::string path = construct_asset_path(
           target_dir, texture_asset_get_dir, name);
-        cstring_setup2(&properties.texture_ref.path, path.c_str());
+        cstring_setup2(&properties->texture_ref.path, path.c_str());
 
         aiUVTransform transform;
         value = aiGetMaterialUVTransform(
@@ -123,8 +126,20 @@ extract_material(
   }
 
   // save the material to disk
+  binary_stream_t stream;
+  binary_stream_def(&stream);
+  binary_stream_setup(&stream, &g_default_allocator);
+  material_asset_serialize(&material, &stream);
 
-  // clean it up
+  std::string type_dir = material_asset_get_dir();
+  std::string target_bin = target_dir + "\\" + type_dir;
+  ensure_directory(target_bin);
+  file_name = get_simple_name(data_str.C_Str());
+  std::string target_file = target_bin + "\\" + file_name + ".bin";
+  write_to_file(stream, target_file);
+
+  binary_stream_cleanup(&stream);
+  material_asset_cleanup(&material, &g_default_allocator);
 }
 
 void
@@ -135,7 +150,7 @@ copy_mesh_topology(
   uint32_t face_count = pMesh->mNumFaces;
   cvector_setup2(&mesh->indices, uint32_t);
   cvector_resize(&mesh->indices, face_count * 3);
-  for (uint32_t i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < face_count; ++i) {
     aiFace *face = &pMesh->mFaces[i];
     assert(face->mNumIndices == 3 && "We do not support non-triangle meshes!!");
     uint32_t *indices = ((uint32_t *)mesh->indices.data) + i * 3;
@@ -188,8 +203,7 @@ void
 import_meshes(
   const aiScene *pScene,
   const std::string &source_file,
-  const std::string &target_dir,
-  bool_t all)
+  const std::string &target_dir)
 {
   // NOTE: Currently assimp will decompose the mesh if it contains more than
   // one material, so basically a single material is specified. The rest of
@@ -197,6 +211,7 @@ import_meshes(
   // Additionally no transform is assigned to the mesh, instead it uses the
   // transform attached to the parent node.
   // TODO(@khalil): investigate multi-material import.
+  std::string file_name;
   for (uint32_t i = 0, scene_i = 0; i < pScene->mNumMeshes; ++i) {
     // skip skeletal meshes
     if (pScene->mMeshes[i]->HasBones())
@@ -205,22 +220,44 @@ import_meshes(
     aiMesh *pMesh = pScene->mMeshes[i];
     mesh_asset_t mesh = {};
     // assimp garantees at least one material, unless incomplete flag is set
-    extract_material(pScene->mMaterials[pMesh->mMaterialIndex], target_dir);
+    extract_material(
+      pScene->mMaterials[pMesh->mMaterialIndex], target_dir, file_name);
 
-    // TODO: Handle the material here.
     copy_mesh_topology(&mesh, pMesh);
 
-    // 1- handle the material + textures.
-    // 2- serialize the mesh and the texture etc...
-    // 4- free the mesh.
+    // set the mesh material
+    cvector_setup2(&mesh.materials, asset_ref_t);
+    cvector_resize(&mesh.materials, 1);
+    asset_ref_t *material_ref = cvector_as(&mesh.materials, 0, asset_ref_t);
+    material_ref->type_id = get_type_id(material_asset_t);
+    std::string path = construct_asset_path(
+      target_dir, material_asset_get_dir, file_name);
+    cstring_setup2(&material_ref->path, path.c_str());
+
+    binary_stream_t stream;
+    binary_stream_def(&stream);
+    binary_stream_setup(&stream, &g_default_allocator);
+    mesh_asset_serialize(&mesh, &stream);
+
+    std::string type_dir = mesh_asset_get_dir();
+    std::string target_bin = target_dir + "\\" + type_dir;
+    ensure_directory(target_bin);
+    std::string mesh_name = get_simple_name(source_file);
+    mesh_name += "_";
+    mesh_name += pMesh->mName.C_Str();
+    mesh_name += "_" + std::to_string(i);
+    std::string target_file = target_bin + "\\" + mesh_name + ".bin";
+    write_to_file(stream, target_file);
+
+    binary_stream_cleanup(&stream);
+    mesh_asset_cleanup(&mesh, &g_default_allocator);
   }
 }
 
 void
 import_meshes(
   const std::string &source_file,
-  const std::string &target_dir,
-  bool_t all)
+  const std::string &target_dir)
 {
   Assimp::Importer Importer;
   // TODO(@khalil): need to reinvestigate this, is this still needed for anims?
@@ -236,5 +273,5 @@ import_meshes(
     std::cout << "Error parsing '" << source_file << "'" <<
     Importer.GetErrorString() << std::endl;
   else
-    import_meshes(pScene, source_file, target_dir, all);
+    import_meshes(pScene, source_file, target_dir);
 }

@@ -11,6 +11,7 @@
 #include <cassert>
 #include <importer/importer.h>
 #include <importer/fonts.h>
+#include <importer/meshes.h>
 #include <importer/sublevels.h>
 #include <importer/textures.h>
 #include <importer/utils.h>
@@ -29,6 +30,8 @@ import(
     import_texture(source_file, target_dir);
   else if (extension == "map")
     import_map(source_file, target_dir);
+  else
+    import_meshes(source_file, target_dir);
 }
 
 void
