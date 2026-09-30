@@ -185,8 +185,8 @@ copy_mesh_topology(
 
   // NOTE: assimp supports 8 channels for vertices, we only consider the first.
   // TODO: consider supporting more than 1 channel.
+  cvector_setup2(&mesh->uvs, float);
   if (pMesh->mTextureCoords[0]) {
-    cvector_setup2(&mesh->uvs, float);
     cvector_resize(&mesh->uvs, vertices_count * 3);
 
     for (uint32_t i = 0; i < vertices_count; ++i) {
@@ -196,7 +196,8 @@ copy_mesh_topology(
       uvs[1] = pUVs->y;
       uvs[2] = pUVs->z;
     }
-  }
+  } else
+    cvector_resize(&mesh->uvs, 0);
 }
 
 void
@@ -242,10 +243,7 @@ import_meshes(
     std::string type_dir = mesh_asset_get_dir();
     std::string target_bin = target_dir + "\\" + type_dir;
     ensure_directory(target_bin);
-    std::string mesh_name = get_simple_name(source_file);
-    mesh_name += "_";
-    mesh_name += pMesh->mName.C_Str();
-    mesh_name += "_" + std::to_string(i);
+    std::string mesh_name = pMesh->mName.C_Str();
     std::string target_file = target_bin + "\\" + mesh_name + ".bin";
     write_to_file(stream, target_file);
 
