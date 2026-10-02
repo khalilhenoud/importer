@@ -1,1 +1,0 @@
-build\Debug\importer F:\data\raws\quake\e1m1.map F:\data\level1

@@ -15,12 +15,4 @@
 
 
 void
-import(
-  const std::string &source_file,
-  const std::string &target_dir);
-
-void
-import(
-  const std::string &source_file1,
-  const std::string &source_file2,
-  const std::string &target_dir);
+import(int argc, char *argv[]);

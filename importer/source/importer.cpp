@@ -9,45 +9,67 @@
  *
  */
 #include <cassert>
+#include <cstring>
 #include <importer/importer.h>
 #include <importer/fonts.h>
 #include <importer/meshes.h>
 #include <importer/sublevels.h>
 #include <importer/textures.h>
 #include <importer/utils.h>
+#include <library/cmdline/cmdline.h>
 
 
 void
-import(
-  const std::string &source_file,
-  const std::string &target_dir)
+import(int argc, char *argv[])
 {
-  assert(!source_file.empty());
-  assert(!target_dir.empty());
+  cmd_repo_t repo = {};
+  uint32_t total = parse_cmdline_args(&repo, argc, argv);
 
-  std::string extension = get_extension(source_file);
-  if (extension == "png")
+  assert(repo.list.used > 1 && "use this with proper args");
+
+  // [--texture|-t] source_file target_dir
+  // [--map] source_file target_dir
+  // [--font|-f] source_file_csv source_file_png target_dir
+  // [--mesh|-m] source_file target_dir
+  if (
+    !strcmp(repo.list.entries[1].ptr, "--texture") ||
+    !strcmp(repo.list.entries[1].ptr, "-t")) {
+    assert(repo.list.used > 3);
+
+    std::string source_file = repo.list.entries[2].ptr;
+    assert(get_extension(source_file) == "png");
+
+    std::string target_dir = repo.list.entries[3].ptr;
     import_texture(source_file, target_dir);
-  else if (extension == "map")
+  } else if (!strcmp(repo.list.entries[1].ptr, "--map")) {
+    assert(repo.list.used > 3);
+
+    std::string source_file = repo.list.entries[2].ptr;
+    assert(get_extension(source_file) == "map");
+
+    std::string target_dir = repo.list.entries[3].ptr;
     import_map(source_file, target_dir);
-  else
-    import_meshes(source_file, target_dir);
-}
+  } else if (
+    !strcmp(repo.list.entries[1].ptr, "--font") ||
+    !strcmp(repo.list.entries[1].ptr, "-f")) {
+    assert(repo.list.used > 4);
 
-void
-import(
-  const std::string &source_file1,
-  const std::string &source_file2,
-  const std::string &target_dir)
-{
-  assert(!source_file1.empty());
-  assert(!source_file2.empty());
-  assert(!target_dir.empty());
+    std::string source_file1 = repo.list.entries[2].ptr;
+    assert(get_extension(source_file1) == "csv");
 
-  std::string extension1 = get_extension(source_file1);
-  std::string extension2 = get_extension(source_file2);
-  if (extension1 == "csv" && extension2 == "png")
+    std::string source_file2 = repo.list.entries[3].ptr;
+    assert(get_extension(source_file2) == "png");
+
+    std::string target_dir = repo.list.entries[4].ptr;
     import_font(source_file1, source_file2, target_dir);
-  else
-    assert(false);
+  } else if (
+    !strcmp(repo.list.entries[1].ptr, "--mesh") ||
+    !strcmp(repo.list.entries[1].ptr, "-m")) {
+    assert(repo.list.used > 3);
+
+    std::string source_file = repo.list.entries[2].ptr;
+    std::string target_dir = repo.list.entries[3].ptr;
+    import_meshes(source_file, target_dir);
+  } else
+    assert(false && "unsupported format!");
 }

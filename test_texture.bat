@@ -1,0 +1,1 @@
+build\Debug\importer --texture F:\data\textures\default.png F:\data\level1
