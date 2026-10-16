@@ -12,16 +12,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_executable(${PROJECT_NAME}
-        ./source/fonts.cpp
         ./source/importer.cpp
+        ./source/fonts.cpp
 				./source/main.cpp
+        ./source/meshes.cpp
+        ./source/skinned_meshes.cpp
         ./source/sublevels.cpp
         ./source/textures.cpp
-        ./source/topology/point.cpp
         ./source/topology/brush.cpp
+        ./source/topology/point.cpp
         ./source/topology/poly_brush.cpp
         ./source/topology/polygon.cpp
-        ./source/meshes.cpp
         # ./source/parsers/quake/string_utils.cpp
         # ./source/parsers/quake/bvh_utils.cpp
         # ./source/parsers/quake/loader.cpp

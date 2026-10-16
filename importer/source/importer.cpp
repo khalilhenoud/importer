@@ -13,6 +13,7 @@
 #include <importer/importer.h>
 #include <importer/fonts.h>
 #include <importer/meshes.h>
+#include <importer/skinned_meshes.h>
 #include <importer/sublevels.h>
 #include <importer/textures.h>
 #include <importer/utils.h>
@@ -31,6 +32,7 @@ import(int argc, char *argv[])
   // [--map] source_file target_dir
   // [--font|-f] source_file_csv source_file_png target_dir
   // [--mesh|-m] source_file target_dir
+  // [--skinned|-s] [-a]* source_file target_dir
   if (
     !strcmp(repo.list.entries[1].ptr, "--texture") ||
     !strcmp(repo.list.entries[1].ptr, "-t")) {
@@ -70,6 +72,32 @@ import(int argc, char *argv[])
     std::string source_file = repo.list.entries[2].ptr;
     std::string target_dir = repo.list.entries[3].ptr;
     import_meshes(source_file, target_dir);
+  } else if (
+    !strcmp(repo.list.entries[1].ptr, "--skinned") ||
+    !strcmp(repo.list.entries[1].ptr, "-s")) {
+    assert(repo.list.used > 3);
+
+    bool import_anim = false;
+    std::string source_file, target_dir;
+
+    if (!strcmp(repo.list.entries[2].ptr, "-a")) {
+      assert(repo.list.used > 4);
+      import_anim = true;
+      source_file = repo.list.entries[3].ptr;
+      target_dir = repo.list.entries[4].ptr;
+    } else {
+      source_file = repo.list.entries[2].ptr;
+      target_dir = repo.list.entries[3].ptr;
+    }
+
+    import_skinned_meshes(source_file, target_dir, import_anim);
+  } else if (
+    !strcmp(repo.list.entries[1].ptr, "-sa")) {
+    assert(repo.list.used > 3);
+
+    std::string source_file = repo.list.entries[2].ptr;
+    std::string target_dir = repo.list.entries[3].ptr;
+    import_skinned_meshes(source_file, target_dir, true);
   } else
     assert(false && "unsupported format!");
 }

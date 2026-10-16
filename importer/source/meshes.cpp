@@ -204,21 +204,27 @@ void
 import_meshes(
   const aiScene *pScene,
   const std::string &source_file,
-  const std::string &target_dir)
+  const std::string &target_dir,
+  mesh_import_type_t types)
 {
-  // NOTE: Currently assimp will decompose the mesh if it contains more than
-  // one material, so basically a single material is specified. The rest of
-  // the materials can be found on identically named meshes.
-  // Additionally no transform is assigned to the mesh, instead it uses the
-  // transform attached to the parent node.
+  // NOTE: assimp decomposes a mesh if it contains more than one material, a
+  // single material is specified. The rest can be found on identically named
+  // meshes. no transform is assigned to the mesh, it uses the parent node's
+  // transform
   // TODO(@khalil): investigate multi-material import.
   std::string file_name;
   for (uint32_t i = 0, scene_i = 0; i < pScene->mNumMeshes; ++i) {
-    // skip skeletal meshes
-    if (pScene->mMeshes[i]->HasBones())
-      continue;
-
     aiMesh *pMesh = pScene->mMeshes[i];
+
+    if (types != mesh_import_type_t::mesh_all) {
+      if (types == mesh_import_type_t::mesh_non_skinned)
+        if (pMesh->HasBones())
+          continue;
+      else if (types == mesh_import_type_t::mesh_skinned)
+        if (!pMesh->HasBones())
+          continue;
+    }
+
     mesh_asset_t mesh = {};
     // assimp garantees at least one material, unless incomplete flag is set
     extract_material(
@@ -259,6 +265,7 @@ import_meshes(
 {
   Assimp::Importer Importer;
   // TODO(@khalil): need to reinvestigate this, is this still needed for anims?
+  // maybe a newer version of assimp.
   Importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UNIT_SIZE, true);
   const aiScene *pScene = Importer.ReadFile(
     source_file.c_str(),

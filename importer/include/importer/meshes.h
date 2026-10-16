@@ -13,8 +13,22 @@
 #include <string>
 
 
-// will export all the meshes if true, otherwise the first one
+struct aiScene;
+
+enum class mesh_import_type_t {
+  mesh_non_skinned,
+  mesh_skinned,
+  mesh_all
+};
+
 void
 import_meshes(
   const std::string &source_file,
   const std::string &target_dir);
+
+void
+import_meshes(
+  const aiScene *pScene,
+  const std::string &source_file,
+  const std::string &target_dir,
+  mesh_import_type_t types = mesh_import_type_t::mesh_non_skinned);
