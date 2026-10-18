@@ -55,6 +55,12 @@ count_material_textures(const aiMaterial *pMaterial)
   return total;
 }
 
+// NOTE: assimp decomposes a mesh if it contains more than one material, a
+// single material is specified. The rest can be found on identically named
+// meshes. no transform is assigned to the mesh, it uses the parent node's
+// transform. Additionally, assimp guarantees at least one material, unless
+// incomplete flag is set
+// TODO(@khalil): investigate multi-material import.
 static
 void
 extract_material(
@@ -200,6 +206,43 @@ copy_mesh_topology(
     cvector_resize(&mesh->uvs, 0);
 }
 
+mesh_import_info_t
+import_mesh(
+  const aiScene *pScene,
+  const uint32_t index,
+  const std::string &source_file,
+  const std::string &target_dir)
+{
+  mesh_import_info_t info;
+  aiMesh *pMesh = pScene->mMeshes[index];
+
+  mesh_asset_t mesh = {};
+  const aiMaterial *pMaterial = pScene->mMaterials[pMesh->mMaterialIndex];
+  std::string file_name;
+  extract_material(pMaterial, target_dir, file_name);
+
+  copy_mesh_topology(&mesh, pMesh);
+  info.vertex_count = mesh.vertices.size / 3;
+  info.index_count = mesh.indices.size;
+
+  // set the mesh material
+  cvector_setup2(&mesh.materials, asset_ref_t);
+  cvector_resize(&mesh.materials, 1);
+  asset_ref_t *material_ref = cvector_as(&mesh.materials, 0, asset_ref_t);
+  material_ref->type_id = get_type_id(material_asset_t);
+  std::string path = construct_asset_path(
+    target_dir, material_asset_get_dir, file_name);
+  cstring_setup2(&material_ref->path, path.c_str());
+
+  write_to_file(
+    target_dir,
+    &mesh,
+    mesh_asset_serialize, mesh_asset_get_dir, pMesh->mName.C_Str(), "bin");
+  mesh_asset_cleanup(&mesh, &g_default_allocator);
+
+  return info;
+}
+
 void
 import_meshes(
   const aiScene *pScene,
@@ -207,13 +250,8 @@ import_meshes(
   const std::string &target_dir,
   mesh_import_type_t types)
 {
-  // NOTE: assimp decomposes a mesh if it contains more than one material, a
-  // single material is specified. The rest can be found on identically named
-  // meshes. no transform is assigned to the mesh, it uses the parent node's
-  // transform
-  // TODO(@khalil): investigate multi-material import.
   std::string file_name;
-  for (uint32_t i = 0, scene_i = 0; i < pScene->mNumMeshes; ++i) {
+  for (uint32_t i = 0; i < pScene->mNumMeshes; ++i) {
     aiMesh *pMesh = pScene->mMeshes[i];
 
     if (types != mesh_import_type_t::mesh_all) {
@@ -225,36 +263,7 @@ import_meshes(
           continue;
     }
 
-    mesh_asset_t mesh = {};
-    // assimp garantees at least one material, unless incomplete flag is set
-    extract_material(
-      pScene->mMaterials[pMesh->mMaterialIndex], target_dir, file_name);
-
-    copy_mesh_topology(&mesh, pMesh);
-
-    // set the mesh material
-    cvector_setup2(&mesh.materials, asset_ref_t);
-    cvector_resize(&mesh.materials, 1);
-    asset_ref_t *material_ref = cvector_as(&mesh.materials, 0, asset_ref_t);
-    material_ref->type_id = get_type_id(material_asset_t);
-    std::string path = construct_asset_path(
-      target_dir, material_asset_get_dir, file_name);
-    cstring_setup2(&material_ref->path, path.c_str());
-
-    binary_stream_t stream;
-    binary_stream_def(&stream);
-    binary_stream_setup(&stream, &g_default_allocator);
-    mesh_asset_serialize(&mesh, &stream);
-
-    std::string type_dir = mesh_asset_get_dir();
-    std::string target_bin = target_dir + "\\" + type_dir;
-    ensure_directory(target_bin);
-    std::string mesh_name = pMesh->mName.C_Str();
-    std::string target_file = target_bin + "\\" + mesh_name + ".bin";
-    write_to_file(stream, target_file);
-
-    binary_stream_cleanup(&stream);
-    mesh_asset_cleanup(&mesh, &g_default_allocator);
+    import_mesh(pScene, i, source_file, target_dir);
   }
 }
 

@@ -32,7 +32,7 @@ import(int argc, char *argv[])
   // [--map] source_file target_dir
   // [--font|-f] source_file_csv source_file_png target_dir
   // [--mesh|-m] source_file target_dir
-  // [--skinned|-s] [-a]* source_file target_dir
+  // [--skinned] [-s]* [-a]* source_file target_dir
   if (
     !strcmp(repo.list.entries[1].ptr, "--texture") ||
     !strcmp(repo.list.entries[1].ptr, "-t")) {
@@ -72,32 +72,27 @@ import(int argc, char *argv[])
     std::string source_file = repo.list.entries[2].ptr;
     std::string target_dir = repo.list.entries[3].ptr;
     import_meshes(source_file, target_dir);
-  } else if (
-    !strcmp(repo.list.entries[1].ptr, "--skinned") ||
-    !strcmp(repo.list.entries[1].ptr, "-s")) {
+  } else if (!strcmp(repo.list.entries[1].ptr, "--skinned")) {
     assert(repo.list.used > 3);
 
     bool import_anim = false;
+    bool import_skeleton = false;
+    uint32_t options = repo.list.used - 3;  // exe source and target file
     std::string source_file, target_dir;
 
-    if (!strcmp(repo.list.entries[2].ptr, "-a")) {
-      assert(repo.list.used > 4);
-      import_anim = true;
-      source_file = repo.list.entries[3].ptr;
-      target_dir = repo.list.entries[4].ptr;
-    } else {
-      source_file = repo.list.entries[2].ptr;
-      target_dir = repo.list.entries[3].ptr;
+    uint32_t index = 2;
+    for (uint32_t count = index + options; index < count; ++index) {
+      if (!strcmp(repo.list.entries[2].ptr, "-a"))
+        import_anim = true;
+      else if (!strcmp(repo.list.entries[2].ptr, "-s"))
+        import_skeleton = true;
     }
 
-    import_skinned_meshes(source_file, target_dir, import_anim);
-  } else if (
-    !strcmp(repo.list.entries[1].ptr, "-sa")) {
-    assert(repo.list.used > 3);
+    source_file = repo.list.entries[index++].ptr;
+    target_dir = repo.list.entries[index++].ptr;
 
-    std::string source_file = repo.list.entries[2].ptr;
-    std::string target_dir = repo.list.entries[3].ptr;
-    import_skinned_meshes(source_file, target_dir, true);
+    import_skinned_meshes(
+      source_file, target_dir, import_skeleton, import_anim);
   } else
     assert(false && "unsupported format!");
 }

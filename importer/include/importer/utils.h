@@ -213,7 +213,6 @@ construct_asset_path(
   return construct_asset_path(target_dir, get_dir, name, "bin");
 }
 
-
 inline
 std::string
 get_extension(const std::string &path)
@@ -249,6 +248,7 @@ get_sanitized(std::string str)
   replace(str, "/", "divd_");
   return str;
 }
+
 
 // inline
 // std::vector<std::string>

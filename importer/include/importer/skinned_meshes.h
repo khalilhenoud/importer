@@ -20,4 +20,5 @@ void
 import_skinned_meshes(
   const std::string &source_file,
   const std::string &target_dir,
+  bool import_skeleton = true,
   bool import_anim = false);
