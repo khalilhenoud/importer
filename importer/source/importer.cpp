@@ -32,7 +32,7 @@ import(int argc, char *argv[])
   // [--map] source_file target_dir
   // [--font|-f] source_file_csv source_file_png target_dir
   // [--mesh|-m] source_file target_dir
-  // [--skinned] [-s]* [-a]* source_file target_dir
+  // [--skinned] [-s]* source_file target_dir
   if (
     !strcmp(repo.list.entries[1].ptr, "--texture") ||
     !strcmp(repo.list.entries[1].ptr, "-t")) {
@@ -75,24 +75,23 @@ import(int argc, char *argv[])
   } else if (!strcmp(repo.list.entries[1].ptr, "--skinned")) {
     assert(repo.list.used > 3);
 
-    bool import_anim = false;
     bool import_skeleton = false;
-    uint32_t options = repo.list.used - 3;  // exe source and target file
+    uint32_t options = repo.list.used - 4; // [exe][type][source][target file]
     std::string source_file, target_dir;
 
     uint32_t index = 2;
     for (uint32_t count = index + options; index < count; ++index) {
-      if (!strcmp(repo.list.entries[2].ptr, "-a"))
-        import_anim = true;
-      else if (!strcmp(repo.list.entries[2].ptr, "-s"))
+      if (!strcmp(repo.list.entries[2].ptr, "-s"))
         import_skeleton = true;
+      else
+        break;
     }
 
     source_file = repo.list.entries[index++].ptr;
     target_dir = repo.list.entries[index++].ptr;
 
     import_skinned_meshes(
-      source_file, target_dir, import_skeleton, import_anim);
+      source_file, target_dir, import_skeleton);
   } else
     assert(false && "unsupported format!");
 }

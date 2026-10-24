@@ -65,6 +65,7 @@ static
 void
 extract_material(
   const aiMaterial *pMaterial,
+  const std::string &source_file,
   const std::string &target_dir,
   std::string &file_name)
 {
@@ -108,15 +109,20 @@ extract_material(
       value = aiGetMaterialTexture(
         pMaterial, (aiTextureType)t_type_index, i, &path);
 
+      // test if the texture is local or not
+      std::string out_file;
+      bool found = search_for_file(source_file, path.C_Str(), out_file);
+      assert(found);
+
       if (value == AI_SUCCESS) {
-        import_texture(path.C_Str(), target_dir);
+        import_texture(out_file.c_str(), target_dir);
 
         texture_properties_t *properties = cvector_as(
           &material.textures, index, texture_properties_t);
         ++index;
 
         properties->texture_ref.type_id = get_type_id(texture_asset_t);
-        std::string name = get_simple_name(path.C_Str());
+        std::string name = get_simple_name(out_file.c_str());
         std::string path = construct_asset_path(
           target_dir, texture_asset_get_dir, name);
         cstring_setup2(&properties->texture_ref.path, path.c_str());
@@ -219,7 +225,7 @@ import_mesh(
   mesh_asset_t mesh = {};
   const aiMaterial *pMaterial = pScene->mMaterials[pMesh->mMaterialIndex];
   std::string file_name;
-  extract_material(pMaterial, target_dir, file_name);
+  extract_material(pMaterial, source_file, target_dir, file_name);
 
   copy_mesh_topology(&mesh, pMesh);
   info.vertex_count = mesh.vertices.size / 3;

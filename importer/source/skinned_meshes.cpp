@@ -265,8 +265,7 @@ import_skinned_meshes(
   const aiScene *pScene,
   const std::string &source_file,
   const std::string &target_dir,
-  bool import_skeleton,
-  bool import_anim)
+  bool import_skeleton)
 {
   for (uint32_t i = 0; i < pScene->mNumMeshes; ++i) {
     aiMesh *pMesh = pScene->mMeshes[i];
@@ -314,8 +313,7 @@ void
 import_skinned_meshes(
   const std::string &source_file,
   const std::string &target_dir,
-  bool import_skeleton,
-  bool import_anim)
+  bool import_skeleton)
 {
   Assimp::Importer Importer;
   Importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UNIT_SIZE, true);
@@ -331,5 +329,5 @@ import_skinned_meshes(
     Importer.GetErrorString() << std::endl;
   else
     import_skinned_meshes(
-      pScene, source_file, target_dir, import_skeleton, import_anim);
+      pScene, source_file, target_dir, import_skeleton);
 }

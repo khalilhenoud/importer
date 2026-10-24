@@ -249,6 +249,32 @@ get_sanitized(std::string str)
   return str;
 }
 
+inline
+bool
+search_for_file(
+  const std::string &source_file,
+  const std::string &file,
+  std::string &out_file)
+{
+  std::string file_rp = file;
+  std::replace(file_rp.begin(), file_rp.end(), '/', '\\');
+  if (std::filesystem::exists(file_rp)) {
+    out_file = file_rp;
+    return true;
+  }
+
+  std::string directory = source_file;
+  size_t found_at = std::string::npos;
+  while ((found_at = directory.find_last_of('\\')) != std::string::npos) {
+    directory = directory.substr(0, found_at);
+    out_file = directory + "\\" + file_rp;
+    if (std::filesystem::exists(out_file))
+      return true;
+  }
+
+  return false;
+}
+
 
 // inline
 // std::vector<std::string>
