@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # add the executable
 add_executable(${PROJECT_NAME}
         ./source/importer.cpp
+        ./source/animations.cpp
         ./source/fonts.cpp
 				./source/main.cpp
         ./source/meshes.cpp
@@ -23,21 +24,6 @@ add_executable(${PROJECT_NAME}
         ./source/topology/point.cpp
         ./source/topology/poly_brush.cpp
         ./source/topology/polygon.cpp
-        # ./source/parsers/quake/string_utils.cpp
-        # ./source/parsers/quake/bvh_utils.cpp
-        # ./source/parsers/quake/loader.cpp
-        # ./source/parsers/quake/map.cpp
-        # ./source/parsers/assimp/loader.cpp
-        # ./source/parsers/assimp/bvhs.cpp
-        # ./source/parsers/assimp/fonts.cpp
-        # ./source/parsers/assimp/nodes.cpp
-        # ./source/parsers/assimp/animations.cpp
-        # ./source/parsers/assimp/meshes.cpp
-        # ./source/parsers/assimp/skinned_meshes.cpp
-        # ./source/parsers/assimp/materials.cpp
-        # ./source/parsers/assimp/textures.cpp
-        # ./source/parsers/assimp/lights.cpp
-        # ./source/parsers/assimp/cameras.cpp
 				)
 
 target_link_libraries(${PROJECT_NAME}

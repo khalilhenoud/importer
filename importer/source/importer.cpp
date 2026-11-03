@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cstring>
 #include <importer/importer.h>
+#include <importer/animations.h>
 #include <importer/fonts.h>
 #include <importer/meshes.h>
 #include <importer/skinned_meshes.h>
@@ -72,6 +73,12 @@ import(int argc, char *argv[])
     std::string source_file = repo.list.entries[2].ptr;
     std::string target_dir = repo.list.entries[3].ptr;
     import_meshes(source_file, target_dir);
+  } else if (!strcmp(repo.list.entries[1].ptr, "--anim")) {
+    assert(repo.list.used > 3);
+
+    std::string source_file = repo.list.entries[2].ptr;
+    std::string target_dir = repo.list.entries[3].ptr;
+    import_animations(source_file, target_dir);
   } else if (!strcmp(repo.list.entries[1].ptr, "--skinned")) {
     assert(repo.list.used > 3);
 
