@@ -400,7 +400,7 @@ extract_textures(
   texture_map_t &texture_map,
   std::string wad_file_relative)
 {
-  // TODO: remove ASAP, should be part of the working directory.
+  // TODO: remove ASAP, implement you own parser
   static std::string tools_folder = "F:\\importer\\tools\\";
 
   // wad extraction directory

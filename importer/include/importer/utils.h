@@ -23,12 +23,9 @@
 #include <material/material_asset.h>
 #include <math/quatf.h>
 #include <math/vector3f.h>
-// #include <entity/mesh/material.h>
-// #include <props/color.h>
 
 
 struct allocator_t;
-// struct aiScene;
 
 inline
 void
@@ -274,52 +271,3 @@ search_for_file(
 
   return false;
 }
-
-
-// inline
-// std::vector<std::string>
-// filter_existing(std::vector<std::string>& files)
-// {
-//   std::vector<std::string> non_existing;
-//   auto iter = files.begin();
-//   while (iter != files.end()) {
-//     if (!std::filesystem::exists(*iter)) {
-//       non_existing.push_back(*iter);
-//       iter = files.erase(iter);
-//       continue;
-//     }
-
-//     ++iter;
-//   }
-
-//   return non_existing;
-// }
-
-// inline
-// void
-// replace_missing_files(
-//   std::string target_dir,
-//   std::vector<std::string> files,
-//   std::string defaulted)
-// {
-//   for (auto& file : files) {
-//     auto target_path = file;
-//     target_path = target_path.substr(target_path.find_last_of("/\\") + 1);
-//     target_path = target_dir + target_path;
-//     bool success = std::filesystem::copy_file(defaulted, target_path);
-//     assert(success);
-//   }
-// }
-
-// inline
-// void
-// copy_files(std::string target_dir, std::vector<std::string> files)
-// {
-//   for (auto& file : files) {
-//     auto target_path = file;
-//     target_path = target_path.substr(target_path.find_last_of("/\\") + 1);
-//     target_path = target_dir + target_path;
-//     bool success = std::filesystem::copy_file(file, target_path);
-//     assert(success);
-//   }
-// }
