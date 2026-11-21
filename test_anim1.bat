@@ -1,0 +1,1 @@
+build\Debug\importer --anim "F:\data\skeletal\Standard Walk\Standard Walk.dae" F:\data\shared\anim1

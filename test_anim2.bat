@@ -1,0 +1,1 @@
+build\Debug\importer --anim "F:\data\skeletal\Silly Dancing\Silly Dancing.dae" F:\data\shared\anim2

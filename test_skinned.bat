@@ -1,0 +1,1 @@
+build\Debug\importer --skinned -s "F:\data\skeletal\Standard Walk\Standard Walk.dae" F:\data\shared

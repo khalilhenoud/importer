@@ -1,1 +1,1 @@
-build\Debug\importer --mesh "F:\data\raws\map_textured2.blend" F:\data\shared
+build\Debug\importer --mesh F:\data\raws\monkey\monkey.obj F:\data\shared
